@@ -45,28 +45,6 @@ function nearWord(t, line, win = 0.22) {
 const burstAt = (t) => LYRICS.find((l) => l.kind === 'burst' && t >= l.t - 0.05 && t <= l.e);
 const wag = (t) => t * 18;
 
-function cape(ctx, t, x, y, s, dir, color = '#ff3d5a') {
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(s * dir, s);
-  ctx.beginPath();
-  ctx.moveTo(70, -175);
-  const pts = [];
-  for (let i = 0; i <= 8; i++) {
-    const k = i / 8;
-    pts.push([70 - k * 300, -175 + k * 40 + Math.sin(t * 14 - k * 5) * 26 * k]);
-  }
-  pts.forEach(([px, py], i) => ctx.lineTo(px, py - 30 * (1 - i / 8)));
-  for (let i = 8; i >= 0; i--) ctx.lineTo(pts[i][0], pts[i][1] + 40 + 70 * (i / 8));
-  ctx.lineTo(90, -130);
-  ctx.closePath();
-  fillStroke(ctx, color, INK, 6);
-  ctx.beginPath();
-  ctx.arc(88, -150, 14, 0, TAU);
-  fillStroke(ctx, '#ffd84d', INK, 4);
-  ctx.restore();
-}
-
 function house(ctx, x, y, s, doorOpen = 0) {
   ctx.save();
   ctx.translate(x, y);
@@ -656,12 +634,11 @@ function thunder(ctx, t, sec) {
   ctx.save();
   ctx.translate(bx, by);
   ctx.rotate(tilt);
-  cape(ctx, t, 0, 0, 1.25, 1);
   // Brie turns into whatever is being chanted: “CÔVE” / MINHOCA / “LINHÃO”
   let cw = -1;
   if (line) for (let i = 0; i < line.words.length; i++) if (t >= line.words[i][0]) cw = i;
   const kind = cw >= 0 ? (/CÔVE/.test(line.words[cw][1]) ? 'cabbage' : /MINHOCA/.test(line.words[cw][1]) ? 'worm' : 'lion') : null;
-  bree(ctx, 0, 0, 1.25, 1, { phase: run(t, 2), amp: 1, ear: 1, mouth: wi >= 0 ? 1 : 0.5, eyes: wi >= 0 ? 'wide' : 'happy', wag: wag(t), ...(kind ? costume(kind, t) : {}) }, false);
+  bree(ctx, 0, 0, 1.25, 1, { cape: { t }, phase: run(t, 2), amp: 1, ear: 1, mouth: wi >= 0 ? 1 : 0.5, eyes: wi >= 0 ? 'wide' : 'happy', wag: wag(t), ...(kind ? costume(kind, t) : {}) }, false);
   if (cw >= 0) {
     // costume-change poof
     const pa = (t - line.words[cw][0]) / 0.3;
@@ -1218,6 +1195,9 @@ function parade(ctx, t, sec) {
       shadow(ctx, x + enter(i), 964, 90 * sc);
       bree(ctx, x + enter(i), y - hop(i), sc, 1, { phase: run(t, 2), ear: 0.8, mouth: 0.7, eyes: 'happy', wag: wag(t), ...o, ...costume(kind, t) }, false);
     };
+    // Bree leading with cape and crown (drawn first so the lion walks in front of the cape's tip)
+    const bx = 1650 + enter(0);
+    bree(ctx, bx, 960, 1.0, 1, { cape: { t }, phase: run(t, 2), ear: 0.8, mouth: 0.7, eyes: 'happy', wag: wag(t), crown: true });
     tr(5, 140, 960, 0.66, 'croc');
     tr(4, 500, 960, 0.66, 'worm');
     tr(3, 770, 960, 0.66, 'cheese');
@@ -1231,10 +1211,6 @@ function parade(ctx, t, sec) {
     drawBreeSide(ctx, { phase: null, ear: 0.8, mouth: 0.7, eyes: 'happy', wag: wag(t), ...costume('cabbage', t) });
     ctx.restore();
     tr(1, 1290, 960, 0.66, 'lion');
-    // Bree leading with cape and crown
-    const bx = 1650 + enter(0);
-    cape(ctx, t, bx, 960, 1.0, 1);
-    bree(ctx, bx, 960, 1.0, 1, { phase: run(t, 2), ear: 0.8, mouth: 0.7, eyes: 'happy', wag: wag(t), crown: true });
     // floating notes
     for (let i = 0; i < 10; i++) {
       const a = (t * 0.4 + rand(i)) % 1;

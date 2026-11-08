@@ -35,6 +35,7 @@ export function drawBreeSide(ctx, o = {}) {
   ctx.save();
   ctx.translate(0, bob);
   ctx.rotate(pitch);
+  if (o.cape) drawCapeBack(ctx, o.cape, running ? amp : 0.25, lw);
   o.under?.(ctx, o, 'side');
 
   // legs: [hipX, angle, shade]
@@ -81,6 +82,10 @@ export function drawBreeSide(ctx, o = {}) {
     ctx.stroke();
   }
 
+  if (o.cape && capeStyle(o.cape) === 'drape') {
+    drawCapeDrape(ctx, o.cape, lw);
+    if (!o.noTail) drawTail(ctx, -78, -112, o.wag ?? 0, lw);
+  }
   o.overBody?.(ctx, o, 'side');
   // near legs
   leg(70, fA, false);
@@ -93,6 +98,132 @@ export function drawBreeSide(ctx, o = {}) {
   ctx.restore();
 }
 
+/* ---------------- superhero cape (side view) ----------------
+ * o.cape = { t, color, lining, style }. Styles (CAPE.style is the default):
+ *  'strap' cape tucked under the ears, lying along the top of the back
+ *  'fly'   same, but the cloth lifts up and flies higher off the back
+ *  'drape' cloth drapes over the top of the back like a little blanket, then flows
+ *  'royal' longer, wider cape with a gold-trimmed hem */
+export const CAPE = { style: 'royal' };
+export function setCapeStyle(st) { CAPE.style = st; }
+const capeStyle = (c) => c.style ?? CAPE.style;
+
+function capeEdges(c, speed) {
+  const t = c.t ?? 0, st = capeStyle(c);
+  const royal = st === 'royal', fly = st === 'fly';
+  const N = 14, L = (royal ? 270 : 235) + 45 * speed;
+  const top = [], bot = [];
+  for (let i = 0; i <= N; i++) {
+    const s = i / N;
+    const x = 44 - s * L * (1 - 0.04 * Math.sin(t * 7.3));
+    const lift = (1 - speed) * 90 * s * s; // hangs lower when slow
+    const rise = fly ? -70 * s * speed : 0; // flies up off the back
+    const yc = -176 + 22 * s * s + lift + rise;
+    const w = 40 + (royal ? 130 : 100) * s;
+    const wv = Math.sin(t * (8 + 6 * speed) - s * 6.5) * (8 + 20 * speed) * s;
+    const wv2 = Math.sin(t * (8 + 6 * speed) - s * 6.5 - 0.9) * (10 + 26 * speed) * s;
+    top.push([x, yc - w / 2 + wv]);
+    bot.push([x - 8 * s, yc + w / 2 + wv2]);
+  }
+  return { top, bot, t, N };
+}
+function capeOutline(ctx, e) {
+  const { top, bot, t, N } = e;
+  ctx.beginPath();
+  ctx.moveTo(top[0][0], top[0][1]);
+  for (let i = 1; i <= N; i++) ctx.lineTo(top[i][0], top[i][1]);
+  const [tx, ty] = top[N], [bx, by] = bot[N];
+  for (let k = 1; k <= 3; k++) {
+    const a = k / 3, b = (k - 0.5) / 3;
+    ctx.quadraticCurveTo(lerp(tx, bx, b) - 22 - 6 * Math.sin(t * 11 + k), lerp(ty, by, b), lerp(tx, bx, a), lerp(ty, by, a));
+  }
+  for (let i = N - 1; i >= 0; i--) ctx.lineTo(bot[i][0], bot[i][1]);
+  ctx.closePath();
+}
+function drawCapeBack(ctx, c, speed, lw) {
+  const col = c.color ?? '#ff3d5a', lin = c.lining ?? '#b8173a';
+  const e = capeEdges(c, speed);
+  const { top, bot, t, N } = e;
+  ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  capeOutline(ctx, e);
+  fillStroke(ctx, col, INK, lw);
+  ctx.save();
+  capeOutline(ctx, e);
+  ctx.clip();
+  // darker lining showing along the lower edge where the cloth curls
+  ctx.beginPath();
+  for (let i = 0; i <= N; i++) {
+    const s = i / N;
+    const [x, y] = bot[i];
+    const d = 10 + 18 * s * (0.6 + 0.4 * Math.sin(t * 9 - s * 6));
+    i ? ctx.lineTo(x, y - d) : ctx.moveTo(x, y - d);
+  }
+  for (let i = N; i >= 0; i--) ctx.lineTo(bot[i][0], bot[i][1] + 10);
+  ctx.closePath();
+  ctx.fillStyle = lin;
+  ctx.fill();
+  // fold lines following the ripple
+  ctx.strokeStyle = 'rgba(0,0,0,0.16)';
+  ctx.lineWidth = 5;
+  for (const f of [0.35, 0.65]) {
+    ctx.beginPath();
+    for (let i = 2; i <= N; i++) {
+      const x = lerp(top[i][0], bot[i][0], f), y = lerp(top[i][1], bot[i][1], f);
+      i > 2 ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    }
+    ctx.stroke();
+  }
+  if (capeStyle(c) === 'royal') {
+    // gold trim along the trailing hem
+    ctx.strokeStyle = '#ffd84d';
+    ctx.lineWidth = 16;
+    ctx.beginPath();
+    const [tx, ty] = top[N], [bx, by] = bot[N];
+    ctx.moveTo(tx, ty);
+    for (let k = 1; k <= 3; k++) {
+      const a = k / 3, b = (k - 0.5) / 3;
+      ctx.quadraticCurveTo(lerp(tx, bx, b) - 22 - 6 * Math.sin(t * 11 + k), lerp(ty, by, b), lerp(tx, bx, a), lerp(ty, by, a));
+    }
+    ctx.stroke();
+  }
+  ctx.restore();
+  capeOutline(ctx, e);
+  ctx.lineWidth = lw;
+  ctx.strokeStyle = INK;
+  ctx.stroke();
+  ctx.restore();
+}
+// 'drape': cloth lying over the top of the back (drawn over the body)
+function drawCapeDrape(ctx, c, lw) {
+  const col = c.color ?? '#ff3d5a', t = c.t ?? 0;
+  ctx.save();
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  ctx.moveTo(70, -186);
+  ctx.quadraticCurveTo(-10, -200, -112, -170);
+  // scalloped lower edge hanging over her side, swaying a little
+  const pts = [[-112, -170], [-84, -128], [-46, -128], [-8, -134], [30, -140]];
+  for (let i = 1; i < pts.length; i++) {
+    const [x0, y0] = pts[i - 1], [x1, y1] = pts[i];
+    const sw = Math.sin(t * 10 + i) * 4;
+    ctx.quadraticCurveTo((x0 + x1) / 2, Math.max(y0, y1) + 16 + sw, x1, y1);
+  }
+  ctx.quadraticCurveTo(52, -150, 70, -186);
+  ctx.closePath();
+  fillStroke(ctx, col, INK, lw);
+  ctx.strokeStyle = 'rgba(0,0,0,0.16)';
+  ctx.lineWidth = 5;
+  ctx.lineCap = 'round';
+  for (const x of [-60, -20]) {
+    ctx.beginPath();
+    ctx.moveTo(x + 6, -186);
+    ctx.quadraticCurveTo(x - 4, -160, x, -132);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
 // collar look: band colour, optional stitch line / studs, tag colours
 export const COLLAR_STYLE = { band: '#0f5a45', stitch: null, studs: '#ffcf3f', ring: '#ffcf3f', tag: '#ffcf3f', clover: BOW, cloverOnly: false, studShape: 'dot', charmRim: null, charmSize: 30 };
 export function setCollarStyle(st) { Object.assign(COLLAR_STYLE, st); }

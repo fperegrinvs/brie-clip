@@ -35,7 +35,7 @@ export function sectionAt(t) {
 
 // lyric lines. kind: 'sing' (karaoke), 'burst' (comic pops), 'soft', 'narr'
 const B = (words, end, style, layout) => ({ kind: 'burst', t: words[0][0], e: end, words, style, layout });
-const SIDES6 = [[0.17, 0.2, -0.1], [0.83, 0.2, 0.1], [0.19, 0.5, 0.06], [0.81, 0.5, -0.08], [0.2, 0.8, -0.05], [0.8, 0.8, 0.07]];
+const SIDES6 = [[0.17, 0.2, -0.1], [0.83, 0.2, 0.1], [0.19, 0.5, 0.06], [0.81, 0.5, -0.08], [0.2, 0.8, -0.05], [0.76, 0.8, 0.07]];
 const STORM = [[0.19, 0.31, -0.1], [0.81, 0.31, 0.08], [0.5, 0.1, -0.03]];
 const SCOLD = [[0.33, 0.17, -0.08], [0.7, 0.84, 0.05]];
 const TOP2 = [[0.25, 0.17, -0.1], [0.75, 0.2, 0.08]];
@@ -43,9 +43,9 @@ const S = (t, e, text) => ({ kind: 'sing', t, e, text });
 
 export const LYRICS = [
   { kind: 'narr', t: 1.1, e: 11.2, text: 'From the Kingdom of Cloverleaf hails Brie!' },
-  B([[11.54, 'PIM!'], [12.42, 'PIM!'], [13.32, 'PIM PINHA!'], [14.0, 'BRIE!'], [14.64, 'BRIE!'], [15.28, 'BRIZINHA!']], 16.3, undefined, SIDES6),
+  B([[11.54, 'PIM!'], [12.42, 'PIM!'], [13.32, 'PIM PINHA!'], [14.0, 'BRIE!'], [14.64, 'BRIE!'], [15.28, 'BRIEZINHA!']], 16.3, undefined, SIDES6),
 
-  S(37.32, 40.8, 'Brie, Brizinha, furacão de algodão'),
+  S(37.32, 40.8, 'Brie, Briezinha, furacão de algodão'),
   S(40.86, 44.3, 'Quatro patas, zero freio, derrapando pelo chão'),
   S(44.34, 47.5, 'Bebê “goldinho”, bebê fofinho'),
   S(47.6, 51.95, 'Passa pela sala como um míssil pequenininho!'),
@@ -57,7 +57,7 @@ export const LYRICS = [
   B([[59.8, 'LINGUITOS!'], [60.62, '“COCODRILO”!']], 61.32, undefined, TOP2),
   S(61.38, 63.32, 'Uma “côve” de patins descendo um trilho!'),
 
-  S(63.38, 66.84, 'Brie, Brizinha, corre pela cozinha!'),
+  S(63.38, 66.84, 'Brie, Briezinha, corre pela cozinha!'),
   S(66.92, 70.54, 'Pim pim, pim pinha, nossa pequenina!'),
   S(70.62, 73.88, 'Zoomies, zoomies, quem vai segurar?'),
   S(73.96, 77.74, 'Faz três voltas pela sala sem parar!'),
@@ -84,7 +84,7 @@ export const LYRICS = [
 
   B([[138.88, 'NÃÃÃO!'], [140.72, 'RECOMEÇOU!']], 142.59, 'mega'),
 
-  S(142.7, 145.99, 'Brie, Brizinha, corre pela cozinha!'),
+  S(142.7, 145.99, 'Brie, Briezinha, corre pela cozinha!'),
   S(146.06, 149.69, 'Pim pim, pim pinha, nossa pequenina!'),
   S(149.76, 153.06, 'Zoomies, zoomies, quem vai segurar?'),
   S(153.14, 156.89, 'Faz três voltas pela sala sem parar!'),
@@ -98,7 +98,7 @@ export const LYRICS = [
   S(175.76, 178.89, 'Uma nova aventura a cada dia!'),
   S(178.98, 182.39, 'Pequena no tamanho, gigante na energia!'),
 
-  B([[182.46, 'BRIE!'], [184.52, 'BRIZINHA!']], 186.39, 'mega', TOP2),
+  B([[182.46, 'BRIE!'], [184.52, 'BRIEZINHA!']], 186.39, 'mega', TOP2),
   B([[186.44, 'PIM PIM!'], [187.12, 'PIM PINHA!']], 188.74, 'mega', TOP2),
 ];
 
