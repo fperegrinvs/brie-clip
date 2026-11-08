@@ -291,6 +291,7 @@ function drawSideHead(ctx, x, y, o, lw) {
     ctx.stroke();
   }
   ctx.restore();
+  if (o.crown) drawSeatedCrown(ctx, 0, -70, 0.8, -0.12, lw);
   ctx.restore();
 }
 
@@ -424,7 +425,7 @@ export function drawFrontHead(ctx, expr, lw = 6, o = {}) {
   blob(ctx, head, FUR, lw);
   // muzzle
   blob(ctx, [[0, 30, 40, 28, 0]], '#fbf9fd', 0);
-  if (o.crown) drawCrown(ctx, 0, -92);
+  if (o.crown) drawSeatedCrown(ctx, 0, -76, 1, 0, lw);
 
   // blush
   ctx.fillStyle = BLUSH;
@@ -494,6 +495,31 @@ export function drawFrontHead(ctx, expr, lw = 6, o = {}) {
       fillStroke(ctx, TONGUE, INK, 3);
     }
   }
+}
+
+// crown nestled into the topknot: fur tufts poke over the band so it sits *in* the fluff
+export function drawSeatedCrown(ctx, x, y, s = 1, rot = 0, lw = 6) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(rot);
+  ctx.scale(s, s);
+  drawCrown(ctx, 0, 0);
+  const tufts = [[-38, 12, 13], [-13, 16, 15], [13, 16, 15], [38, 12, 13]];
+  ctx.fillStyle = FUR;
+  for (const [tx, ty, tr] of tufts) {
+    ctx.beginPath();
+    ctx.arc(tx, ty, tr, 0, TAU);
+    ctx.fill();
+  }
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = lw * 0.8;
+  ctx.lineCap = 'round';
+  for (const [tx, ty, tr] of tufts) {
+    ctx.beginPath();
+    ctx.arc(tx, ty, tr, Math.PI + 0.45, TAU - 0.45);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 export function drawCrown(ctx, x, y) {

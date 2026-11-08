@@ -1,7 +1,7 @@
 // One draw function per song section. Each gets (ctx, t, sec) where sec = sectionAt(t).
 import { TAU, INK, clamp, lerp, inv, easeOut, easeIn, easeInOut, easeOutBack, rand, rrange, noise, blob, fillStroke, clover, heart, star } from './util.js';
 import { W, H, sky, flash, vignette, speedLines, focusLines, sunburst, halftone, twinkleStars, confetti, hearts, dust, lightning, firework, sparkles, smokeTrail, fluffWipe, shadow } from './fx.js';
-import { drawBreeSide, drawBreeFront, drawFrontHead, drawCrown, drawBreeZoom, drawWings } from './bree.js';
+import { drawBreeSide, drawBreeFront, drawFrontHead, drawBreeZoom, drawWings } from './bree.js';
 import { beatAt, beatPhase, pulse, energyAt, hitAt, LYRICS } from './timeline.js';
 import { logo, bigLabel, COMIC } from './text.js';
 import * as P from './props.js';
@@ -208,19 +208,18 @@ function arrive(ctx, t, sec) {
   const lt = sec.lt;
   const camX = 300 + Math.sin(lt * 0.3) * 60;
   room(ctx, 'living', camX, t);
-  // flying cushions
-  for (let i = 0; i < 4; i++) {
-    const kick = 1 + i * 2.2;
+  // flying plush food toys
+  const toys = ['toast', 'onigiri', 'milk', 'sunny', 'birdie'];
+  for (let i = 0; i < 9; i++) {
+    const kick = 0.6 + i * 1.1;
     const a = lt - kick;
     if (a > 0 && a < 1.6) {
-      const x = 500 + i * 300 + a * 500 * (i % 2 ? -1 : 1);
+      const x = 260 + ((i * 410) % 1400) + a * 480 * (i % 2 ? -1 : 1);
       const y = 640 - 700 * a + 900 * a * a;
       ctx.save();
       ctx.translate(x, y);
-      ctx.rotate(a * 9);
-      ctx.beginPath();
-      ctx.roundRect(-70, -55, 140, 110, 30);
-      fillStroke(ctx, ['#ffd84d', '#ff9ec4', '#4cc3ff', '#b77dff'][i], INK, 6);
+      ctx.rotate(Math.sin(a * 7) * 0.9 + a * 2 * (i % 2 ? -1 : 1));
+      P.plushToy(ctx, toys[i % 5], 96);
       ctx.restore();
     }
   }
@@ -446,7 +445,27 @@ function prechorus(ctx, t, sec) {
     sky(ctx, '#b77dff', '#e7d4ff');
     halftone(ctx, 'rgba(255,255,255,0.25)', 30, 8);
     const x0 = 100, y0 = 300, x1 = W - 100, y1 = 900;
+    const sl = (y1 - y0) / (x1 - x0);
+    const buddy = (rx0, ry0, rx1, ry1, k, r, ph) => {
+      if (k < 0 || k > 1.05) return;
+      const bx = lerp(rx0, rx1, k), by = lerp(ry0, ry1, k), ba = Math.atan2(ry1 - ry0, rx1 - rx0);
+      ctx.save();
+      ctx.translate(bx, by - 12);
+      ctx.rotate(ba);
+      P.skate(ctx, -r * 0.45, 0, r / 85, t * 30);
+      P.skate(ctx, r * 0.6, 0, r / 85, t * 30);
+      ctx.translate(0, -r * 0.8 - r * 0.8);
+      ctx.rotate(Math.sin(t * 18 + ph) * 0.08);
+      P.cabbageBuddy(ctx, r, t, ph);
+      ctx.restore();
+    };
+    const pr = clamp(lt / s.dur);
+    // back rail (upper) and front rail (lower left), each with a couple of côves
+    P.rail(ctx, 560, 110, W + 80, 110 + (W + 80 - 560) * sl);
+    buddy(560, 110, W + 80, 110 + (W + 80 - 560) * sl, 0.08 + pr * 0.75, 74, 1);
+    buddy(560, 110, W + 80, 110 + (W + 80 - 560) * sl, 0.42 + pr * 0.7, 70, 2.5);
     P.rail(ctx, x0, y0, x1, y1);
+    buddy(x0, y0, x1, y1, 0.12 + 0.88 * Math.pow(pr, 1.4) + 0.2 + pr * 0.1, 78, 4);
     const k = 0.12 + 0.88 * Math.pow(clamp(lt / s.dur), 1.4);
     const x = lerp(x0, x1, k), y = lerp(y0, y1, k);
     const ang = Math.atan2(y1 - y0, x1 - x0);
@@ -460,6 +479,9 @@ function prechorus(ctx, t, sec) {
     ctx.scale(1.05, 1.05);
     drawBreeSide(ctx, { phase: null, ear: 1, mouth: 1, eyes: 'wide', wag: wag(t), ...costume('cabbage', t) });
     ctx.restore();
+    P.rail(ctx, -120, 640, 760, 640 + 880 * sl);
+    buddy(-120, 640, 760, 640 + 880 * sl, 0.05 + pr * 0.7, 82, 3);
+    buddy(-120, 640, 760, 640 + 880 * sl, 0.45 + pr * 0.55, 76, 5);
     // sparks
     for (let i = 0; i < 10; i++) {
       const a = (t * 7 + i * 0.3) % 1;
@@ -765,24 +787,32 @@ function verse2(ctx, t, sec) {
     ctx.beginPath();
     ctx.arc(260, 880, 70, 0, TAU);
     fillStroke(ctx, '#7fd3ff', INK, 6);
-    // ringed planet
+    // ringed pão de queijo planet
     ctx.save();
     ctx.translate(1500 + Math.sin(lt) * 20, 640 + Math.cos(lt * 0.8) * 20);
-    ctx.rotate(-0.3);
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 260, 60, 0, Math.PI, TAU);
-    ctx.lineWidth = 14;
-    ctx.strokeStyle = '#b77dff';
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(0, 0, 140, 0, TAU);
-    fillStroke(ctx, '#5fd77a', INK, 7);
-    ctx.beginPath();
-    ctx.ellipse(0, 0, 260, 60, 0, 0, Math.PI);
-    ctx.lineWidth = 14;
-    ctx.strokeStyle = '#b77dff';
-    ctx.stroke();
+    ctx.rotate(Math.sin(lt * 0.5) * 0.05);
+    P.paoDeQueijo(ctx, 145, t, true);
     ctx.restore();
+    // Brie's plush UFO toy zooming around with a tractor beam
+    {
+      const ux = 430 + Math.sin(lt * 1.3) * 110, uy = 290 + Math.sin(lt * 2.6) * 45;
+      ctx.save();
+      ctx.translate(ux, uy);
+      ctx.rotate(Math.cos(lt * 1.3) * 0.18);
+      const beam = ctx.createLinearGradient(0, 60, 0, 420);
+      beam.addColorStop(0, 'rgba(255,240,150,0.55)');
+      beam.addColorStop(1, 'rgba(255,240,150,0)');
+      ctx.fillStyle = beam;
+      ctx.beginPath();
+      ctx.moveTo(-60, 70);
+      ctx.lineTo(60, 70);
+      ctx.lineTo(170 + Math.sin(lt * 6) * 15, 420);
+      ctx.lineTo(-170 - Math.sin(lt * 6) * 15, 420);
+      ctx.closePath();
+      ctx.fill();
+      P.ufoToy(ctx, 130);
+      ctx.restore();
+    }
     // Brie floating as a pão de queijo with orbit rings + astronaut helmet
     ctx.save();
     ctx.translate(820, 700 + Math.sin(lt * 1.4) * 40);
@@ -1204,12 +1234,7 @@ function parade(ctx, t, sec) {
     // Bree leading with cape and crown
     const bx = 1650 + enter(0);
     cape(ctx, t, bx, 960, 1.0, 1);
-    bree(ctx, bx, 960, 1.0, 1, { phase: run(t, 2), ear: 0.8, mouth: 0.7, eyes: 'happy', wag: wag(t) });
-    ctx.save();
-    ctx.translate(bx + 98, 960 - 230);
-    ctx.scale(0.7, 0.7);
-    drawCrown(ctx, 0, 0);
-    ctx.restore();
+    bree(ctx, bx, 960, 1.0, 1, { phase: run(t, 2), ear: 0.8, mouth: 0.7, eyes: 'happy', wag: wag(t), crown: true });
     // floating notes
     for (let i = 0; i < 10; i++) {
       const a = (t * 0.4 + rand(i)) % 1;

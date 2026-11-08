@@ -1029,3 +1029,243 @@ export function clock(ctx, x, y, r, t) {
   ctx.stroke();
   ctx.restore();
 }
+
+/* ---------------- plush food toys (felt legs, embroidered faces) ---------------- */
+function feltLegs(ctx, r, col) {
+  ctx.strokeStyle = INK;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  for (const sx of [-1, 1]) {
+    const path = () => {
+      ctx.beginPath();
+      ctx.moveTo(sx * r * 0.3, r * 0.6);
+      ctx.lineTo(sx * r * 0.34, r * 1.12);
+      ctx.lineTo(sx * r * 0.34 + sx * r * 0.2, r * 1.14);
+    };
+    path();
+    ctx.lineWidth = r * 0.2;
+    ctx.stroke();
+    path();
+    ctx.strokeStyle = col;
+    ctx.lineWidth = r * 0.2 - 8;
+    ctx.stroke();
+    ctx.strokeStyle = INK;
+  }
+}
+function stitchFace(ctx, r, o = {}) {
+  const ey = o.ey ?? -r * 0.05, ex = o.ex ?? r * 0.28;
+  if (o.bigEyes) {
+    for (const sx of [-1, 1]) {
+      ctx.beginPath();
+      ctx.arc(sx * ex, ey, r * 0.15, 0, TAU);
+      fillStroke(ctx, '#ffffff', INK, 3);
+      ctx.fillStyle = o.eyeCol ?? INK;
+      ctx.beginPath();
+      ctx.arc(sx * ex + r * 0.03, ey + r * 0.02, r * 0.08, 0, TAU);
+      ctx.fill();
+    }
+  } else {
+    ctx.fillStyle = o.eyeCol ?? INK;
+    for (const sx of [-1, 1]) {
+      ctx.beginPath();
+      ctx.arc(sx * ex, ey, r * 0.075, 0, TAU);
+      ctx.fill();
+    }
+  }
+  if (o.beak) {
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.08, ey + r * 0.06);
+    ctx.lineTo(r * 0.08, ey + r * 0.06);
+    ctx.lineTo(0, ey + r * 0.26);
+    ctx.closePath();
+    fillStroke(ctx, '#ff4f4f', INK, 3);
+  } else {
+    ctx.beginPath();
+    ctx.arc(o.smileDx ?? 0, ey + r * 0.06, r * (o.smileR ?? 0.17), 0.15 * Math.PI, 0.85 * Math.PI);
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = Math.max(3, r * 0.06);
+    ctx.lineCap = 'round';
+    ctx.stroke();
+  }
+  if (o.blush !== false) {
+    ctx.fillStyle = 'rgba(255,120,150,0.55)';
+    for (const sx of [-1, 1]) {
+      ctx.beginPath();
+      ctx.ellipse(sx * ex * 1.55, ey + r * 0.16, r * 0.11, r * 0.07, 0, 0, TAU);
+      ctx.fill();
+    }
+  }
+}
+export function plushToy(ctx, kind, r = 70) {
+  ctx.lineJoin = 'round';
+  if (kind === 'toast') {
+    feltLegs(ctx, r, '#6b3a1f');
+    const loaf = (k) => {
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.8 * k, r * 0.75 * k);
+      ctx.lineTo(-r * 0.8 * k, -r * 0.2 * k);
+      ctx.bezierCurveTo(-r * 1.15 * k, -r * 0.35 * k, -r * 1.05 * k, -r * 0.95 * k, -r * 0.5 * k, -r * 0.9 * k);
+      ctx.quadraticCurveTo(0, -r * 1.05 * k, r * 0.5 * k, -r * 0.9 * k);
+      ctx.bezierCurveTo(r * 1.05 * k, -r * 0.95 * k, r * 1.15 * k, -r * 0.35 * k, r * 0.8 * k, -r * 0.2 * k);
+      ctx.lineTo(r * 0.8 * k, r * 0.75 * k);
+      ctx.closePath();
+    };
+    loaf(1);
+    fillStroke(ctx, '#d9822b', INK, 6);
+    loaf(0.78);
+    fillStroke(ctx, '#fff3d6', '#ffffff', 4);
+    stitchFace(ctx, r, { ey: -r * 0.12 });
+  } else if (kind === 'onigiri') {
+    feltLegs(ctx, r, '#555a66');
+    ctx.beginPath();
+    ctx.moveTo(0, -r * 1.0);
+    ctx.bezierCurveTo(r * 0.45, -r * 1.0, r * 1.15, r * 0.35, r * 0.85, r * 0.72);
+    ctx.quadraticCurveTo(0, r * 0.95, -r * 0.85, r * 0.72);
+    ctx.bezierCurveTo(-r * 1.15, r * 0.35, -r * 0.45, -r * 1.0, 0, -r * 1.0);
+    fillStroke(ctx, '#f1dccb', INK, 6);
+    ctx.beginPath();
+    ctx.roundRect(-r * 0.36, r * 0.22, r * 0.72, r * 0.62, 6);
+    fillStroke(ctx, '#c9a272', INK, 4);
+    stitchFace(ctx, r, { ey: -r * 0.2, ex: r * 0.24 });
+  } else if (kind === 'milk') {
+    feltLegs(ctx, r, '#555a66');
+    ctx.beginPath();
+    ctx.roundRect(-r * 0.72, -r * 0.78, r * 1.44, r * 1.6, r * 0.22);
+    fillStroke(ctx, '#ffc8d6', INK, 6);
+    ctx.beginPath();
+    ctx.roundRect(-r * 0.7, -r * 1.02, r * 1.4, r * 0.32, r * 0.14);
+    fillStroke(ctx, '#8a4a2a', INK, 5);
+    stitchFace(ctx, r, { ey: -r * 0.2 });
+    ctx.fillStyle = INK;
+    ctx.font = `600 ${Math.round(r * 0.34)}px "Fredoka", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('milk', 0, r * 0.45);
+  } else if (kind === 'sunny') {
+    feltLegs(ctx, r, '#555a66');
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.88, 0, TAU);
+    fillStroke(ctx, '#ffe98a', INK, 6);
+    stitchFace(ctx, r, { bigEyes: true, ey: -r * 0.3, ex: r * 0.3, smileR: 0.4, smileDx: r * 0.08, blush: false });
+  } else {
+    // blue birdie
+    feltLegs(ctx, r, '#2ea3ff');
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.88, 0, TAU);
+    fillStroke(ctx, '#aad6ff', INK, 6);
+    ctx.fillStyle = '#c9a272';
+    for (const [x, y, a] of [[-0.35, -0.62, 0.4], [0.32, -0.58, -0.3], [-0.55, 0.35, 0.8], [0.5, 0.4, -0.7]]) {
+      ctx.save();
+      ctx.translate(x * r, y * r);
+      ctx.rotate(a);
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.06, 0);
+      ctx.lineTo(r * 0.06, 0);
+      ctx.lineTo(0, -r * 0.16);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+    stitchFace(ctx, r, { bigEyes: true, eyeCol: '#1d4fd6', beak: true, ey: -r * 0.12, ex: r * 0.24, blush: false });
+  }
+}
+
+// little cabbage friend (for the côve rail)
+export function cabbageBuddy(ctx, r, t, ph = 0) {
+  const ruff = [];
+  for (let i = 0; i < 10; i++) {
+    const a = (i / 10) * TAU;
+    ruff.push([Math.cos(a) * r * 0.8, Math.sin(a) * r * 0.78, r * (0.3 + 0.04 * Math.sin(t * 6 + i + ph))]);
+  }
+  blob(ctx, ruff, '#4faa4a', 6);
+  ctx.beginPath();
+  ctx.arc(0, r * 0.05, r * 0.82, 0, TAU);
+  fillStroke(ctx, '#86d672', INK, 5);
+  ctx.strokeStyle = '#e3f8cf';
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  for (const a of [-2.3, -1.9, -1.25, -0.85]) {
+    ctx.beginPath();
+    ctx.moveTo(0, r * 0.75);
+    ctx.quadraticCurveTo(Math.cos(a) * r * 0.2, r * 0.2, Math.cos(a) * r * 0.62, Math.sin(a) * r * 0.62 + r * 0.05);
+    ctx.stroke();
+  }
+  stitchFace(ctx, r, { ey: r * 0.05, ex: r * 0.26 });
+}
+
+// Brie's plush UFO toy: fuzzy blue dome, blue saucer with orange felt dots,
+// pink mesh rim and two stubby legs.
+export function ufoToy(ctx, r = 100) {
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  const rx = r, ry = r * 0.3, h = r * 0.24;
+  // stubby legs
+  for (const sx of [-1, 1]) {
+    ctx.beginPath();
+    ctx.roundRect(sx * r * 0.4 - r * 0.17, h, r * 0.34, r * 0.42, r * 0.14);
+    fillStroke(ctx, '#2f6fe0', INK, 6);
+  }
+  // pink mesh rim band
+  const band = () => {
+    ctx.beginPath();
+    ctx.moveTo(-rx, 0);
+    ctx.lineTo(-rx, h);
+    ctx.ellipse(0, h, rx, ry, 0, Math.PI, 0, true);
+    ctx.lineTo(rx, 0);
+    ctx.ellipse(0, 0, rx, ry, 0, 0, Math.PI, false);
+    ctx.closePath();
+  };
+  band();
+  fillStroke(ctx, '#ec3f93', INK, 6);
+  ctx.save();
+  band();
+  ctx.clip();
+  ctx.strokeStyle = '#b8226a';
+  ctx.lineWidth = 2.5;
+  const step = r * 0.075;
+  for (let x = -rx * 1.4; x < rx * 1.4; x += step) {
+    ctx.beginPath();
+    ctx.moveTo(x, -ry);
+    ctx.lineTo(x + h + ry * 2, h + ry);
+    ctx.moveTo(x, -ry);
+    ctx.lineTo(x - h - ry * 2, h + ry);
+    ctx.stroke();
+  }
+  ctx.restore();
+  band();
+  ctx.lineWidth = 6;
+  ctx.strokeStyle = INK;
+  ctx.stroke();
+  // saucer top
+  ctx.beginPath();
+  ctx.ellipse(0, 0, rx, ry, 0, 0, TAU);
+  fillStroke(ctx, '#2f6fe0', INK, 6);
+  // orange felt dots around the saucer
+  ctx.fillStyle = '#ff9a3c';
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * TAU + 0.2;
+    const x = Math.cos(a) * rx * 0.76, y = Math.sin(a) * ry * 0.7;
+    ctx.beginPath();
+    ctx.ellipse(x, y, r * 0.075, r * 0.045, 0, 0, TAU);
+    ctx.fill();
+  }
+  // fuzzy dome
+  const dw = r * 0.5;
+  ctx.beginPath();
+  ctx.moveTo(-dw, -r * 0.02);
+  ctx.bezierCurveTo(-dw * 1.02, -r * 0.62, -dw * 0.55, -r * 0.8, 0, -r * 0.8);
+  ctx.bezierCurveTo(dw * 0.55, -r * 0.8, dw * 1.02, -r * 0.62, dw, -r * 0.02);
+  ctx.quadraticCurveTo(0, r * 0.13, -dw, -r * 0.02);
+  fillStroke(ctx, '#62bdf6', INK, 6);
+  // embroidered seam + plush sheen
+  ctx.strokeStyle = '#b3e2ff';
+  ctx.lineWidth = r * 0.05;
+  ctx.beginPath();
+  ctx.moveTo(-r * 0.04, -r * 0.76);
+  ctx.quadraticCurveTo(-r * 0.12, -r * 0.4, -r * 0.08, r * 0.0);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(255,255,255,0.35)';
+  ctx.beginPath();
+  ctx.ellipse(-dw * 0.5, -r * 0.5, r * 0.08, r * 0.16, 0.35, 0, TAU);
+  ctx.fill();
+}
