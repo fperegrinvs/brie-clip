@@ -746,6 +746,11 @@ export function skate(ctx, x, y, s, spin) {
 
 // cheese wedge with a rocket booster, pointing right
 export function cheeseRocket(ctx, t) {
+  rocketPack(ctx, t);
+  cheeseWedge(ctx);
+}
+// flame + booster only (strapped to Brie's back in the costume scenes)
+export function rocketPack(ctx, t) {
   // flame
   const fl = 1 + 0.25 * Math.sin(t * 50);
   ctx.beginPath();
@@ -774,7 +779,8 @@ export function cheeseRocket(ctx, t) {
   ctx.lineTo(-130, 48);
   ctx.closePath();
   fillStroke(ctx, '#ff5d5d', INK, 5);
-  // cheese wedge
+}
+function cheeseWedge(ctx) {
   ctx.beginPath();
   ctx.moveTo(-100, -70);
   ctx.lineTo(190, 10);

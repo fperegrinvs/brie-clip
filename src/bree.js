@@ -35,6 +35,7 @@ export function drawBreeSide(ctx, o = {}) {
   ctx.save();
   ctx.translate(0, bob);
   ctx.rotate(pitch);
+  o.under?.(ctx, o, 'side');
 
   // legs: [hipX, angle, shade]
   const leg = (x, a, far) => {
@@ -49,7 +50,7 @@ export function drawBreeSide(ctx, o = {}) {
   leg(-58, bA * 0.8 - 0.15, true);
 
   // tail plume curling over the back
-  drawTail(ctx, -78, -112, o.wag ?? 0, lw);
+  if (!o.noTail) drawTail(ctx, -78, -112, o.wag ?? 0, lw);
 
   // body cloud with fur fringe
   const body = [[0, -92, 98, 56, 0]];
@@ -80,6 +81,7 @@ export function drawBreeSide(ctx, o = {}) {
     ctx.stroke();
   }
 
+  o.overBody?.(ctx, o, 'side');
   // near legs
   leg(70, fA, false);
   leg(-44, bA, false);
@@ -87,6 +89,7 @@ export function drawBreeSide(ctx, o = {}) {
   drawSideCollar(ctx, lw);
   drawSideHead(ctx, 98, -150, o, lw);
   drawTag(ctx, 86, -76, 0.25 + 0.12 * Math.sin((o.wag ?? 0) * 0.5), lw);
+  o.overHead?.(ctx, o, 'side');
   ctx.restore();
 }
 
@@ -345,13 +348,16 @@ export function drawBreeFront(ctx, o = {}) {
   const lw = o.lw ?? 6;
   const expr = o.expr ?? 'happy';
   ctx.save();
-  if (!o.bodyless) {
+  if (!o.bodyless) o.under?.(ctx, o, 'front');
+  if (!o.bodyless && !o.noTail) {
     // tail peeking out on the right
     ctx.save();
     ctx.translate(70, -70);
     ctx.rotate(0.5 + 0.35 * Math.sin(o.wag ?? 0));
     blob(ctx, [[10, -10, 24], [26, -36, 22], [30, -62, 18], [20, -82, 14]], FUR, lw);
     ctx.restore();
+  }
+  if (!o.bodyless) {
     // body
     const body = [[0, -92, 84, 84, 0]];
     for (let i = 0; i < 12; i++) {
@@ -365,6 +371,7 @@ export function drawBreeFront(ctx, o = {}) {
     ctx.ellipse(0, -40, 60, 26, 0, 0, TAU);
     ctx.fill();
     ctx.globalAlpha = 1;
+    o.overBody?.(ctx, o, 'front');
     // front paws
     blob(ctx, [[-34, -50, 22, 40, 0], [-36, -12, 26, 16, 0]], FUR, lw);
     blob(ctx, [[34, -50, 22, 40, 0], [36, -12, 26, 16, 0]], FUR, lw);
@@ -386,6 +393,7 @@ export function drawBreeFront(ctx, o = {}) {
   drawFrontHead(ctx, expr, lw, o);
   ctx.restore();
   if (!o.bodyless) drawFrontCollar(ctx, lw, o.wag ?? 0);
+  o.overHead?.(ctx, o, 'front');
   ctx.restore();
 }
 

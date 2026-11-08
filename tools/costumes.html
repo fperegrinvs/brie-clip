@@ -1,0 +1,13 @@
+<!doctype html><body style="margin:0;background:#bfe6ff"><canvas id="c" width="2000" height="900"></canvas>
+<script type="module">
+import { drawBreeSide, drawBreeFront } from '../src/bree.js';
+import { costume } from '../src/costumes.js';
+const ctx = document.getElementById('c').getContext('2d');
+const put = (x, y, s, f) => { ctx.save(); ctx.translate(x, y); ctx.scale(s, s); f(); ctx.restore(); };
+const kinds = ['croc', 'cheese', 'cabbage', 'lion', 'worm'];
+kinds.forEach((k, i) => {
+  put(200 + i * 400, 400, 1.1, () => drawBreeSide(ctx, { phase: 0.3, amp: 1, eyes: 'open', mouth: 0.5, ear: 1, wag: 1, ...costume(k, 1) }));
+  put(200 + i * 400, 860, 1.0, () => drawBreeFront(ctx, { expr: 'happy', wag: 1, ...costume(k, 1) }));
+});
+window.done = true;
+</script>

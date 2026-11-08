@@ -5,6 +5,7 @@ import { drawBreeSide, drawBreeFront, drawFrontHead, drawCrown, drawBreeZoom, dr
 import { beatAt, beatPhase, pulse, energyAt, hitAt, LYRICS } from './timeline.js';
 import { logo, bigLabel, COMIC } from './text.js';
 import * as P from './props.js';
+import { costume, withRocket } from './costumes.js';
 
 const FY = P.FLOOR_Y;
 const run = (t, mult = 1) => ((beatAt(t) * mult) % 1 + 1) % 1;
@@ -368,28 +369,19 @@ function verse1(ctx, t, sec) {
       ctx.rotate(Math.PI + Math.sin(t * 22) * 0.18);
       ctx.scale(-1.3, 1.3);
       ctx.translate(0, 160);
-      drawBreeSide(ctx, { phase: (t * 4) % 1, amp: 1, eyes: 'happy', mouth: 0.8, ear: 0.4, wag: wag(t) });
+      drawBreeSide(ctx, { phase: (t * 4) % 1, amp: 1, eyes: 'happy', mouth: 0.8, ear: 0.4, wag: wag(t), ...costume('worm', t) });
       ctx.restore();
       bigLabel(ctx, 'WIGGLE WIGGLE', W / 2, 300, 110, '#b77dff', lt * 3, Math.sin(t * 10) * 0.08);
     } else {
       const k = (lt - 1.4) / (s.dur - 1.4);
       const x = lerp(W / 2, W + 600, easeIn(k));
       speedLines(ctx, t, 1, 1);
-      drawBreeZoom(ctx, x, 960, 1.3, 1, { phase: run(t, 3), ear: 1, mouth: 0.6, eyes: 'happy', wag: wag(t) }, 6, 80);
+      drawBreeZoom(ctx, x, 960, 1.3, 1, { phase: run(t, 3), ear: 1, mouth: 0.6, eyes: 'happy', wag: wag(t), ...costume('worm', t) }, 6, 80);
       dust(ctx, t, W / 2, 960, s.start + 1.4, 8, 50, '#f6e2c8');
     }
   }
 }
 
-function lionMane(ctx, x, y, s, t) {
-  const spikes = [];
-  for (let i = 0; i < 16; i++) {
-    const a = (i / 16) * TAU + Math.sin(t * 6) * 0.05;
-    spikes.push([x + Math.cos(a) * 150 * s, y + Math.sin(a) * 140 * s, 70 * s]);
-  }
-  blob(ctx, spikes, '#ff9a3c', 7);
-  blob(ctx, [[x, y, 165 * s]], '#ffc15a', 0);
-}
 function bonbon(ctx, x, y, r, rot, color) {
   ctx.save();
   ctx.translate(x, y);
@@ -411,43 +403,6 @@ function bonbon(ctx, x, y, r, rot, color) {
   ctx.fill();
   ctx.restore();
 }
-function crocHood(ctx, s) {
-  ctx.save();
-  ctx.scale(s, s);
-  // hood dome
-  ctx.beginPath();
-  ctx.ellipse(0, -40, 150, 125, 0, Math.PI * 1.02, Math.PI * 1.98);
-  ctx.lineTo(150, 30);
-  ctx.quadraticCurveTo(0, -40, -150, 30);
-  ctx.closePath();
-  fillStroke(ctx, '#43b75c', INK, 7);
-  // teeth along the brim
-  ctx.fillStyle = '#fff';
-  for (let i = 0; i < 9; i++) {
-    const x = -120 + i * 30;
-    const yb = -10 + Math.abs(x) * 0.15;
-    ctx.beginPath();
-    ctx.moveTo(x - 12, yb - 8);
-    ctx.lineTo(x, yb + 14);
-    ctx.lineTo(x + 12, yb - 8);
-    ctx.closePath();
-    fillStroke(ctx, '#ffffff', INK, 3);
-  }
-  for (const ex of [-60, 60]) {
-    ctx.beginPath();
-    ctx.arc(ex, -150, 34, 0, TAU);
-    fillStroke(ctx, '#43b75c', INK, 6);
-    ctx.beginPath();
-    ctx.arc(ex, -154, 20, 0, TAU);
-    fillStroke(ctx, '#fff', INK, 4);
-    ctx.fillStyle = INK;
-    ctx.beginPath();
-    ctx.arc(ex + 4, -154, 10, 0, TAU);
-    ctx.fill();
-  }
-  ctx.restore();
-}
-
 function prechorus(ctx, t, sec) {
   const s = sub(t, [[56.05, 'lion'], [57.4, 'cheese'], [59.75, 'croc'], [61.34, 'cabbage']]);
   const lt = s.lt;
@@ -456,8 +411,10 @@ function prechorus(ctx, t, sec) {
     halftone(ctx, 'rgba(255,120,40,0.35)', 30, 10);
     sunburst(ctx, t, W / 2, 560, 'rgba(255,255,255,0.35)', 'rgba(255,255,255,0)', 18, 0.4);
     const y = 700;
-    lionMane(ctx, W / 2, y - 196 * 1.6 + 30, 1.6 * easeOutBack(lt / 0.3), t);
-    front(ctx, W / 2, y + 330, 1.6, { expr: 'shout', wag: wag(t) });
+    const pop = easeOutBack(clamp(lt / 0.3));
+    front(ctx, W / 2, y + 330, 1.6, { expr: 'shout', wag: wag(t), ...costume('lion', t), overBody: (c, o, v) => {
+      c.save(); c.translate(0, -194); c.scale(pop, pop); c.translate(0, 194); costume('lion', t).overBody(c, o, v); c.restore();
+    } });
     for (let i = 0; i < 7; i++) {
       const a = t * 1.4 + (i / 7) * TAU;
       bonbon(ctx, W / 2 + Math.cos(a) * 640, 520 + Math.sin(a) * 300, 44, a * 2, ['#ff5d8f', '#4cc3ff', '#ffd84d', '#37c45c'][i % 4]);
@@ -473,11 +430,9 @@ function prechorus(ctx, t, sec) {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(-0.12 + Math.sin(lt * 5) * 0.08);
-    ctx.scale(1.2, 1.2);
-    P.cheeseRocket(ctx, t);
-    ctx.translate(-20, -40);
-    ctx.scale(0.7, 0.7);
-    drawBreeSide(ctx, { phase: null, ear: 1, mouth: 1, eyes: 'happy', wag: wag(t) });
+    ctx.scale(1.6, 1.6);
+    ctx.translate(0, 90);
+    drawBreeSide(ctx, { phase: null, ear: 1, mouth: 1, eyes: 'happy', wag: wag(t), ...withRocket(costume('cheese', t), t) });
     ctx.restore();
     bigLabel(ctx, 'FOGUETE!', W / 2, 170, 120, '#ff8c42', lt * 2.5, -0.05);
   } else if (s.key === 'croc') {
@@ -486,20 +441,7 @@ function prechorus(ctx, t, sec) {
     sunburst(ctx, t, W / 2, 560, 'rgba(255,255,255,0.3)', 'rgba(255,255,255,0)', 18, 0.4);
     const x = W / 2 + Math.sin(t * 5) * 30;
     const y = 1040;
-    front(ctx, x, y, 1.5, { expr: 'happy', wag: wag(t), tilt: Math.sin(t * 7) * 0.1 });
-    ctx.save();
-    ctx.translate(x, y - 196 * 1.5);
-    ctx.rotate(Math.sin(t * 7) * 0.1);
-    ctx.translate(0, -75);
-    crocHood(ctx, 1.5);
-    ctx.restore();
-    // tongue sticking out
-    ctx.save();
-    ctx.translate(x, y - 196 * 1.5 + 75 * 1.5);
-    ctx.beginPath();
-    ctx.ellipse(0, 20 + Math.sin(t * 12) * 6, 26, 40, 0, 0, TAU);
-    fillStroke(ctx, '#ff7d9c', INK, 6);
-    ctx.restore();
+    front(ctx, x, y, 1.5, { expr: 'shout', wag: wag(t), tilt: Math.sin(t * 7) * 0.1, ...costume('croc', t) });
   } else if (s.key === 'cabbage') {
     sky(ctx, '#b77dff', '#e7d4ff');
     halftone(ctx, 'rgba(255,255,255,0.25)', 30, 8);
@@ -511,11 +453,12 @@ function prechorus(ctx, t, sec) {
     ctx.save();
     ctx.translate(x, y - 12);
     ctx.rotate(ang);
-    P.skate(ctx, -40, 0, 1, t * 30);
-    P.skate(ctx, 50, 0, 1, t * 30);
-    ctx.translate(0, -150);
-    ctx.rotate(Math.sin(t * 20) * 0.1);
-    P.cabbage(ctx, 110, t);
+    P.skate(ctx, -50, 0, 1, t * 30);
+    P.skate(ctx, 80, 0, 1, t * 30);
+    ctx.translate(0, -58);
+    ctx.rotate(Math.sin(t * 20) * 0.06);
+    ctx.scale(1.05, 1.05);
+    drawBreeSide(ctx, { phase: null, ear: 1, mouth: 1, eyes: 'wide', wag: wag(t), ...costume('cabbage', t) });
     ctx.restore();
     // sparks
     for (let i = 0; i < 10; i++) {
@@ -525,8 +468,6 @@ function prechorus(ctx, t, sec) {
       ctx.arc(x - a * 200 * Math.cos(ang) + noise(i + t * 5) * 30, y - a * 200 * Math.sin(ang) - 20 + a * 60, 8 * (1 - a), 0, TAU);
       ctx.fill();
     }
-    // Bree chasing along the floor
-    bree(ctx, lerp(100, 1250, k), 1040, 0.8, 1, { phase: run(t, 2), ear: 1, eyes: 'happy', mouth: 0.8, wag: wag(t) });
   }
   // comic panel border
   ctx.strokeStyle = INK;
@@ -537,7 +478,11 @@ function prechorus(ctx, t, sec) {
 function chorus(ctx, t, sec) {
   const lt = sec.lt;
   const fin = sec.opts.final;
-  room(ctx, 'kitchen', 200, t);
+  // kitchen for 'corre pela cozinha', living room for 'três voltas pela sala'
+  const tv = (fin ? 153.14 : 73.96) - sec.start;
+  const sala = lt >= tv;
+  if (sala) livingRoom(ctx, t);
+  else room(ctx, 'kitchen', 200, t);
   if (fin) {
     // disco lights
     ctx.save();
@@ -570,7 +515,6 @@ function chorus(ctx, t, sec) {
     ctx.restore();
   }
   // lap progress (laps per second), faster on 'três voltas'
-  const tv = (fin ? 153.14 : 73.96) - sec.start;
   const base = 1 / 3.4;
   const laps = lt < tv ? lt * base : tv * base + (lt - tv) * (3 / 3.7);
   const th = laps * TAU + Math.PI / 2;
@@ -586,11 +530,13 @@ function chorus(ctx, t, sec) {
     dust(ctx, t, bx - dir * 120 * scl, by, t - (t % 0.25), 3, 26 * scl, '#ffffff');
   };
   if (depth < 0) drawB();
-  P.island(ctx, cx, 760);
+  if (sala) {
+    P.furniture(ctx, 'sofa', cx - 312, 820);
+  } else P.island(ctx, cx, 760);
   if (depth >= 0) drawB();
   // flour puffs on hits
   const h = hitAt(t);
-  if (h > 0.5) {
+  if (h > 0.5 && !sala) {
     ctx.globalAlpha = (h - 0.5) * 1.5;
     blob(ctx, [[cx + 175, 560, 60], [cx + 120, 520, 45], [cx + 230, 520, 40]], '#ffffff', 0);
     ctx.globalAlpha = 1;
@@ -616,6 +562,25 @@ function chorus(ctx, t, sec) {
     ctx.fillText('VOLTA', 1700, 380);
   }
   if (fin) confetti(ctx, lt, 160, 4, 1);
+  // fluffy wipe kitchen -> sala
+  const wk = (lt - (tv - 0.3)) / 0.3;
+  if (wk > 0 && wk < 2) fluffWipe(ctx, wk);
+}
+function livingRoom(ctx, t) {
+  room(ctx, 'living', 0, t, false);
+  P.furniture(ctx, 'window', 140, FY, t);
+  P.furniture(ctx, 'lamp', 1580, FY, t);
+  P.furniture(ctx, 'plant', 1760, FY, t);
+  P.furniture(ctx, 'frame', 1180, FY, t);
+  // round rug she laps around
+  ctx.beginPath();
+  ctx.ellipse(W / 2, 880, 720, 170, 0, 0, TAU);
+  fillStroke(ctx, '#ffb3cf', INK, 6);
+  ctx.beginPath();
+  ctx.ellipse(W / 2, 880, 600, 120, 0, 0, TAU);
+  ctx.lineWidth = 10;
+  ctx.strokeStyle = '#ffffff';
+  ctx.stroke();
 }
 
 function thunder(ctx, t, sec) {
@@ -670,7 +635,21 @@ function thunder(ctx, t, sec) {
   ctx.translate(bx, by);
   ctx.rotate(tilt);
   cape(ctx, t, 0, 0, 1.25, 1);
-  bree(ctx, 0, 0, 1.25, 1, { phase: run(t, 2), amp: 1, ear: 1, mouth: wi >= 0 ? 1 : 0.5, eyes: wi >= 0 ? 'wide' : 'happy', wag: wag(t) }, false);
+  // Brie turns into whatever is being chanted: “CÔVE” / MINHOCA / “LINHÃO”
+  let cw = -1;
+  if (line) for (let i = 0; i < line.words.length; i++) if (t >= line.words[i][0]) cw = i;
+  const kind = cw >= 0 ? (/CÔVE/.test(line.words[cw][1]) ? 'cabbage' : /MINHOCA/.test(line.words[cw][1]) ? 'worm' : 'lion') : null;
+  bree(ctx, 0, 0, 1.25, 1, { phase: run(t, 2), amp: 1, ear: 1, mouth: wi >= 0 ? 1 : 0.5, eyes: wi >= 0 ? 'wide' : 'happy', wag: wag(t), ...(kind ? costume(kind, t) : {}) }, false);
+  if (cw >= 0) {
+    // costume-change poof
+    const pa = (t - line.words[cw][0]) / 0.3;
+    if (pa < 1) {
+      ctx.globalAlpha = 1 - pa;
+      const pr = 60 + pa * 90;
+      blob(ctx, [[-60, -130, pr], [80, -170, pr * 0.9], [10, -60, pr * 0.8], [150, -120, pr * 0.6]], '#ffffff', 5, 'rgba(58,39,71,0.5)');
+      ctx.globalAlpha = 1;
+    }
+  }
   ctx.restore();
   speedLines(ctx, t, 0.5, -1, 'rgba(255,255,255,0.6)', 200, 800);
   if (fin) sparkles(ctx, t, bx, by - 200, 300, 12, 7, '#fff6a8');
@@ -771,15 +750,10 @@ function verse2(ctx, t, sec) {
     dayOutdoor(ctx, t, camX, { sun: true });
     P.zooGate(ctx, 760 - camX * 0.35, 900);
     speedLines(ctx, t, 0.7, -1, 'rgba(255,255,255,0.7)', 300, 900);
-    const cx = 1300 + Math.sin(lt * 2) * 60;
-    shadow(ctx, cx, 960, 130);
-    ctx.save();
-    ctx.translate(cx, 960);
-    ctx.scale(1.1, 1.1);
-    P.croc(ctx, run(t, 2), { tag: true });
-    ctx.restore();
-    bree(ctx, 580 + Math.sin(lt * 2.5) * 50, 960, 1.15, 1, { phase: run(t, 2), ear: 1, mouth: 0.8, eyes: 'happy', wag: wag(t) });
-    bigLabel(ctx, 'FUGIU!', 1300, 250, 130, '#43b75c', lt * 2.5, -0.08);
+    const bx = 1000 + Math.sin(lt * 2.5) * 80;
+    bree(ctx, bx, 960, 1.3, 1, { phase: run(t, 2), ear: 1, mouth: 0.9, eyes: 'happy', wag: wag(t), ...costume('croc', t) });
+    dust(ctx, t, bx - 150, 960, t - (t % 0.25), 3, 30, '#f6e2c8');
+    bigLabel(ctx, 'FUGIU!', 1450, 250, 130, '#43b75c', lt * 2.5, -0.08);
     if (lt < 0.45) fluffWipe(ctx, 1 + lt / 0.45);
   } else if (s.key === 'space') {
     sky(ctx, '#06051a', '#1d1450');
@@ -791,18 +765,48 @@ function verse2(ctx, t, sec) {
     ctx.beginPath();
     ctx.arc(260, 880, 70, 0, TAU);
     fillStroke(ctx, '#7fd3ff', INK, 6);
-    // pão de queijo planet
+    // ringed planet
     ctx.save();
-    ctx.translate(1250 + Math.sin(lt) * 30, 520 + Math.cos(lt * 0.8) * 30);
-    ctx.rotate(lt * 0.2);
-    P.paoDeQueijo(ctx, 210, t, true);
+    ctx.translate(1500 + Math.sin(lt) * 20, 640 + Math.cos(lt * 0.8) * 20);
+    ctx.rotate(-0.3);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 260, 60, 0, Math.PI, TAU);
+    ctx.lineWidth = 14;
+    ctx.strokeStyle = '#b77dff';
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 0, 140, 0, TAU);
+    fillStroke(ctx, '#5fd77a', INK, 7);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 260, 60, 0, 0, Math.PI);
+    ctx.lineWidth = 14;
+    ctx.strokeStyle = '#b77dff';
+    ctx.stroke();
     ctx.restore();
-    // Bree floating with astronaut helmet
+    // Brie floating as a pão de queijo with orbit rings + astronaut helmet
     ctx.save();
-    ctx.translate(560, 640 + Math.sin(lt * 1.4) * 40);
-    ctx.rotate(-0.25 + Math.sin(lt * 0.9) * 0.15);
-    ctx.scale(1.2, 1.2);
-    drawBreeSide(ctx, { phase: (t * 0.6) % 1, amp: 0.5, ear: 0.2, mouth: 0.7, eyes: 'happy', wag: wag(t) * 0.3 });
+    ctx.translate(820, 700 + Math.sin(lt * 1.4) * 40);
+    ctx.rotate(-0.2 + Math.sin(lt * 0.9) * 0.12);
+    ctx.scale(1.35, 1.35);
+    ctx.save();
+    ctx.translate(20, -110);
+    ctx.rotate(-0.25);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 230, 52, 0, Math.PI, TAU);
+    ctx.lineWidth = 12;
+    ctx.strokeStyle = '#b77dff';
+    ctx.stroke();
+    ctx.restore();
+    drawBreeSide(ctx, { phase: (t * 0.6) % 1, amp: 0.5, ear: 0.2, mouth: 0.7, eyes: 'happy', wag: wag(t) * 0.3, ...costume('cheese', t) });
+    ctx.save();
+    ctx.translate(20, -110);
+    ctx.rotate(-0.25);
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 230, 52, 0, 0, Math.PI);
+    ctx.lineWidth = 12;
+    ctx.strokeStyle = '#b77dff';
+    ctx.stroke();
+    ctx.restore();
     ctx.beginPath();
     ctx.arc(98, -165, 105, 0, TAU);
     ctx.fillStyle = 'rgba(190,230,255,0.25)';
@@ -1179,35 +1183,26 @@ function parade(ctx, t, sec) {
     ctx.restore();
     const enter = (i) => lerp(-900, 0, easeOut((lt - i * 0.6) / 1.5));
     const hop = (i) => Math.abs(Math.sin(beatAt(t) * Math.PI + i)) * 30;
-    // pão de queijo rolling
+    // the costume parade: every character was Brie all along
+    const tr = (i, x, y, sc, kind, o = {}) => {
+      shadow(ctx, x + enter(i), 964, 90 * sc);
+      bree(ctx, x + enter(i), y - hop(i), sc, 1, { phase: run(t, 2), ear: 0.8, mouth: 0.7, eyes: 'happy', wag: wag(t), ...o, ...costume(kind, t) }, false);
+    };
+    tr(5, 140, 960, 0.66, 'croc');
+    tr(4, 500, 960, 0.66, 'worm');
+    tr(3, 770, 960, 0.66, 'cheese');
+    // côve on skates
     ctx.save();
-    ctx.translate(180 + enter(4), 900 - hop(4));
-    ctx.rotate(t * 4);
-    P.paoDeQueijo(ctx, 80, t);
+    ctx.translate(1030 + enter(2), 960 - hop(2));
+    P.skate(ctx, -34, 0, 0.7, t * 25);
+    P.skate(ctx, 52, 0, 0.7, t * 25);
+    ctx.translate(0, -40);
+    ctx.scale(0.66, 0.66);
+    drawBreeSide(ctx, { phase: null, ear: 0.8, mouth: 0.7, eyes: 'happy', wag: wag(t), ...costume('cabbage', t) });
     ctx.restore();
-    // cheese rocket flying
-    ctx.save();
-    ctx.translate(520 + enter(3), 520 + Math.sin(t * 3) * 40);
-    ctx.scale(0.75, 0.75);
-    P.cheeseRocket(ctx, t);
-    ctx.restore();
-    // cabbage on skates
-    ctx.save();
-    ctx.translate(820 + enter(2), 960);
-    P.skate(ctx, -40, -22, 0.8, t * 25);
-    P.skate(ctx, 40, -22, 0.8, t * 25);
-    ctx.translate(0, -140 - hop(2));
-    P.cabbage(ctx, 90, t);
-    ctx.restore();
-    // crocodile
-    shadow(ctx, 1150 + enter(1), 964, 100);
-    ctx.save();
-    ctx.translate(1150 + enter(1), 964);
-    ctx.scale(0.85, 0.85);
-    P.croc(ctx, run(t, 2));
-    ctx.restore();
+    tr(1, 1290, 960, 0.66, 'lion');
     // Bree leading with cape and crown
-    const bx = 1580 + enter(0);
+    const bx = 1650 + enter(0);
     cape(ctx, t, bx, 960, 1.0, 1);
     bree(ctx, bx, 960, 1.0, 1, { phase: run(t, 2), ear: 0.8, mouth: 0.7, eyes: 'happy', wag: wag(t) });
     ctx.save();
