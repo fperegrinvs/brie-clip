@@ -1,0 +1,30 @@
+<!doctype html><meta charset="utf-8"><style>@font-face{font-family:Fredoka;src:url(../fonts/Fredoka.ttf)}</style><body style="margin:0"><canvas id="c" width="1920" height="2100"></canvas>
+<script type="module">
+import { drawBreeSide, drawBreeFront, setCollarStyle } from '../src/bree.js';
+const ctx = document.getElementById('c').getContext('2d');
+await document.fonts.load('40px Fredoka');
+const base = { band: '#0f5a45', stitch: null, studs: '#ffcf3f', ring: '#ffcf3f', tag: '#ffcf3f', clover: '#4fd36c', cloverOnly: true, studShape: 'dot', charmRim: null, charmSize: 30 };
+const OPTS = [
+  ['C · (original) emerald + studs, tag', { ...base, cloverOnly: false, clover: '#37c45c' }],
+  ['E · (original) green + clover charm', { ...base, band: '#1f6b3a', studs: null }],
+  ['1 · Emerald + gold studs + charm', { ...base }],
+  ['2 · …with gold-rimmed charm', { ...base, charmRim: '#ffcf3f' }],
+  ['3 · …with a golden clover charm', { ...base, clover: '#ffcf3f' }],
+  ['4 · Tiny gold clover studs + charm', { ...base, studShape: 'clover' }],
+  ['5 · Darker emerald, big charm', { ...base, band: '#0b4434', charmSize: 37 }],
+  ['6 · Silver studs + silver ring', { ...base, studs: '#e4ebf2', ring: '#e4ebf2' }],
+  ['7 · Studs + gold stitching + charm', { ...base, stitch: '#ffcf3f' }],
+];
+const BG = ['#f2f2f2', '#f2f2f2', '#bfe6ff', '#ffe9a8', '#ffd6e4', '#cfeccc', '#e5dcff', '#ffe0c7', '#d9f2f7'];
+OPTS.forEach(([label, st], i) => {
+  const cx = (i % 3) * 640, cy = Math.floor(i / 3) * 700;
+  ctx.fillStyle = BG[i]; ctx.fillRect(cx, cy, 640, 700);
+  setCollarStyle(st);
+  const put = (x, y, s, f) => { ctx.save(); ctx.translate(cx + x, cy + y); ctx.scale(s, s); f(); ctx.restore(); };
+  put(480, 650, 1.3, () => drawBreeFront(ctx, { expr: 'happy', wag: 1 }));
+  put(165, 620, 0.95, () => drawBreeSide(ctx, { phase: 0.3, amp: 1, eyes: 'happy', mouth: 0.6, ear: 1, wag: 2 }));
+  ctx.fillStyle = '#3a2747'; ctx.font = '600 40px Fredoka'; ctx.fillText(label, cx + 24, cy + 56);
+  ctx.strokeStyle = '#3a2747'; ctx.lineWidth = 4; ctx.strokeRect(cx, cy, 640, 700);
+});
+window.done = true;
+</script>

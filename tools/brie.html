@@ -1,0 +1,10 @@
+<!doctype html><body style="margin:0;background:#bfe6ff"><canvas id="c" width="1600" height="700"></canvas>
+<script type="module">
+import { drawBreeSide, drawBreeFront } from '../src/bree.js';
+const ctx = document.getElementById('c').getContext('2d');
+const put = (x, y, s, f) => { ctx.save(); ctx.translate(x, y); ctx.scale(s, s); f(); ctx.restore(); };
+put(250, 620, 1.8, () => drawBreeSide(ctx, { eyes: 'happy', mouth: 0.4, wag: 1 }));
+put(800, 620, 1.8, () => drawBreeSide(ctx, { phase: 0.3, amp: 1, eyes: 'open', mouth: 0.6, ear: 1, wag: 2 }));
+put(1300, 660, 1.6, () => drawBreeFront(ctx, { expr: 'happy', wag: 1 }));
+window.done = true;
+</script>

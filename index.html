@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Brie — As Crônicas de Cloverleaf</title>
+<style>
+  html, body { margin: 0; background: #111; color: #eee; font: 14px system-ui, sans-serif; }
+  #wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px; }
+  canvas { width: min(100vw - 20px, (100vh - 80px) * 16 / 9); aspect-ratio: 16/9; background: #000; }
+  #bar { display: flex; gap: 10px; align-items: center; width: min(100vw - 20px, 1200px); }
+  #scrub { flex: 1; }
+  body.render #bar, body.render #tap { display: none; }
+  body.render #wrap { padding: 0; }
+  body.render canvas { width: 1920px; height: 1080px; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <canvas id="c"></canvas>
+  <div id="bar">
+    <button id="play">▶︎ / ❚❚</button>
+    <input id="scrub" type="range" min="0" step="0.01" value="0">
+    <span id="time">0.00s</span>
+  </div>
+  <div id="tap"></div>
+  <audio id="audio" src="audio/song.mp3" preload="auto"></audio>
+</div>
+<script type="module" src="src/main.js"></script>
+</body>
+</html>
