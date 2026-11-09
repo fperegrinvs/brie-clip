@@ -163,8 +163,8 @@ function title(ctx, t, sec) {
     sunburst(ctx, t, W / 2, H / 2, '#ffd84d', '#fff3b0', 22, 0.2);
     halftone(ctx, 'rgba(255,140,60,0.25)', 34, 9);
     // Bree jumping behind logo
-    front(ctx, W / 2, 1020 + Math.abs(Math.sin(beatAt(t) * Math.PI)) * -40, 1.5, { expr: 'happy', wag: wag(t), crown: false });
-    logo(ctx, W / 2, 420, 1.15, lt, { ribbon: true });
+    front(ctx, W / 2, 1050 + Math.abs(Math.sin(beatAt(t) * Math.PI)) * -40, 1.5, { expr: 'happy', wag: wag(t), crown: false });
+    logo(ctx, W / 2, 270, 1.1, lt, { ribbon: true });
     flash(ctx, clamp(1 - lt / 0.25));
   } else {
     const k = lt - 4.2;

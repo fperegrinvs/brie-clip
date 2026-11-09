@@ -96,7 +96,7 @@ export const LYRICS = [
 
   S(172.48, 175.64, 'Brie of Cloverleaf!'),
   S(175.76, 178.89, 'Uma nova aventura a cada dia!'),
-  S(178.98, 182.39, 'Pequena no tamanho, gigante na energia!'),
+  S(178.98, 182.39, 'Pequena no tamanho, gigante de energia!'),
 
   B([[182.46, 'BRIE!'], [184.52, 'BRIEZINHA!']], 186.39, 'mega', TOP2),
   B([[186.44, 'PIM PIM!'], [187.12, 'PIM PINHA!']], 188.74, 'mega', TOP2),
