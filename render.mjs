@@ -5,6 +5,7 @@ import { chromium } from 'playwright-core';
 import { spawn, execFileSync } from 'child_process';
 import { mkdirSync, writeFileSync, rmSync } from 'fs';
 
+const PAGE = process.env.PAGE || 'index.html';
 const EXE = process.env.HOME + '/Library/Caches/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-mac-arm64/chrome-headless-shell';
 const FPS = 30;
 const out = process.argv[2] || 'bree-clip.mp4';
@@ -17,7 +18,7 @@ mkdirSync(TMP, { recursive: true });
 
 const browser = await chromium.launch({ executablePath: EXE });
 const probe = await browser.newPage();
-await probe.goto('http://localhost:5178/index.html?render');
+await probe.goto(`http://localhost:5178/${PAGE}?render`);
 await probe.waitForFunction(() => window.ready === true);
 const duration = tEnd ?? (await probe.evaluate(() => window.DURATION));
 await probe.close();
@@ -34,7 +35,7 @@ async function worker(w) {
   const seg = `${TMP}/seg${w}.mp4`;
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
   page.on('pageerror', (e) => console.error(`[w${w}] pageerror`, e.message));
-  await page.goto('http://localhost:5178/index.html?render');
+  await page.goto(`http://localhost:5178/${PAGE}?render`);
   await page.waitForFunction(() => window.ready === true);
   const ff = spawn('ffmpeg', ['-y', '-loglevel', 'error', '-f', 'image2pipe', '-framerate', String(FPS), '-c:v', 'mjpeg', '-i', '-',
     '-c:v', 'libx264', '-preset', 'medium', '-crf', '18', '-pix_fmt', 'yuv420p', '-r', String(FPS), seg], { stdio: ['pipe', 'inherit', 'inherit'] });

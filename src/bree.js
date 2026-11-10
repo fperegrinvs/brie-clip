@@ -27,10 +27,11 @@ export function drawBreeSide(ctx, o = {}) {
   const amp = o.amp ?? 1;
   const lw = o.lw ?? 6;
   const ph = running ? p * TAU : 0;
-  const bob = running ? -18 * amp * (0.5 + 0.5 * Math.sin(ph - Math.PI / 2)) : 0;
-  const pitch = running ? 0.07 * amp * Math.sin(ph) : 0;
-  const fA = running ? 0.95 * amp * Math.sin(ph) : 0;
-  const bA = running ? 0.95 * amp * Math.sin(ph + Math.PI * 0.8) : 0;
+  const bob = o.bob ?? (running ? -18 * amp * (0.5 + 0.5 * Math.sin(ph - Math.PI / 2)) : 0);
+  const pitch = o.pitch ?? (running ? 0.07 * amp * Math.sin(ph) : 0);
+  // o.legs = [front, back] overrides the cycle's leg angles (crouch, full-stretch gallop)
+  const fA = o.legs ? o.legs[0] : running ? 0.95 * amp * Math.sin(ph) : 0;
+  const bA = o.legs ? o.legs[1] : running ? 0.95 * amp * Math.sin(ph + Math.PI * 0.8) : 0;
 
   ctx.save();
   ctx.translate(0, bob);
@@ -535,7 +536,10 @@ export function drawFrontHead(ctx, expr, lw = 6, o = {}) {
   for (const sx of [-1, 1]) {
     ctx.save();
     ctx.translate(sx * 62, -24);
-    ctx.rotate(sx * (0.25 + earDrop + (o.earFlop ?? 0) * Math.sin((o.wag ?? 0) * 2 + sx)));
+    // o.earOut splays both ears out past the head so they are both visible; they then sway together
+    ctx.rotate(o.earOut != null
+      ? sx * (0.25 + earDrop - o.earOut) + (o.earFlop ?? 0) * 0.35 * Math.sin((o.wag ?? 0) * 2)
+      : sx * (0.25 + earDrop + (o.earFlop ?? 0) * Math.sin((o.wag ?? 0) * 2 + sx)));
     blob(ctx, [[sx * 8, 34, 28, 44, 0], [sx * 12, 76, 24, 22, 0], [sx * 2, 92, 14], [sx * 22, 90, 14]], '#f7f3fb', lw);
     ctx.strokeStyle = FUR_DEEP;
     ctx.lineWidth = 3.5;
@@ -566,10 +570,10 @@ export function drawFrontHead(ctx, expr, lw = 6, o = {}) {
     ctx.fill();
   }
   // eyes
-  const eyes = { innocent: 'wide', happy: 'happy', guilty: 'open', shout: 'closed', sleepy: 'closed' }[expr] || 'open';
-  const look = expr === 'guilty' ? -1 : 0;
+  const eyes = o.fEyes ?? ({ innocent: 'wide', happy: 'happy', guilty: 'open', shout: 'closed', sleepy: 'closed' }[expr] || 'open');
+  const look = o.fLook ?? (expr === 'guilty' ? -1 : 0);
   drawEye(ctx, -30, -6, eyes, 1.15, look);
-  drawEye(ctx, 30, -6, eyes, 1.15, look);
+  drawEye(ctx, 30, -6, o.fEyeR ?? eyes, 1.15, look);
   if (expr === 'innocent') {
     // sparkly brows
     ctx.strokeStyle = INK;
@@ -604,7 +608,7 @@ export function drawFrontHead(ctx, expr, lw = 6, o = {}) {
   ctx.strokeStyle = INK;
   ctx.lineWidth = 4;
   ctx.lineCap = 'round';
-  const m = expr === 'shout' ? 1 : expr === 'happy' ? 0.6 : 0;
+  const m = o.fMouth ?? (expr === 'shout' ? 1 : expr === 'happy' ? 0.6 : 0);
   if (m > 0) {
     ctx.beginPath();
     ctx.moveTo(-22, 34);
