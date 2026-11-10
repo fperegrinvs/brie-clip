@@ -23,11 +23,9 @@ export function fitCam(c) {
   return { x: clamp(c.x, hw, W - hw), y: clamp(c.y, hh, H - hh), zoom, rot: c.rot || 0 };
 }
 
-/** Crash zoom: `steps` hard jumps from z0 to z1 starting at t0, one every `step` seconds. */
+/** Quick zoom from z0 to z1 starting at t0: a fast, smooth ease that takes about `steps * step * 2.5` seconds. */
 export function crash(lt, z0, z1, t0 = 0, steps = 3, step = 1 / 12) {
-  const i = clamp(Math.floor((lt - t0) / step) + 1, 0, steps);
-  const settle = i >= steps ? 1 + 0.035 * Math.exp(-(lt - t0 - (steps - 1) * step) * 14) : 1;
-  return lerp(z0, z1, i / steps) * settle;
+  return lerp(z0, z1, easeOut(clamp((lt - t0) / (steps * step * 2.5))));
 }
 
 /** Handheld drift (smooth). */

@@ -647,7 +647,7 @@ const eyesShot = {
     sunburst(c, s.tc, W / 2, 540, '#fff0a0', '#ffb347', 20, 1.2);
   },
   cel(c, s) {
-    brie(c, { view: 'head', x: W / 2, y: 600, s: 4.2, expr: s.lt < 0.5 ? 'innocent' : 'shout', fEyes: s.lt < 0.5 ? undefined : 'wide', rot: Math.sin(s.tc * 50) * 0.02 });
+    brie(c, { view: 'head', x: W / 2, y: 550, s: 3.3, expr: s.lt < 0.5 ? 'innocent' : 'shout', fEyes: s.lt < 0.5 ? undefined : 'wide', rot: Math.sin(s.tc * 50) * 0.02 });
   },
   fx: (c, s) => screen(c, () => focusLines(c, s.tc, W / 2, H / 2, 1, 'rgba(255,255,255,0.9)', 560)),
 };

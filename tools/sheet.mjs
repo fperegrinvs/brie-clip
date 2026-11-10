@@ -1,4 +1,4 @@
-// node tools/sheet.mjs out.jpg t1 t2 ...   -> contact sheet (4 columns, 640x360 cells)
+// node tools/sheet.mjs out.jpg t1 t2 ...   -> contact sheet (COLS columns, default 4, 2560 px wide)
 import { chromium } from 'playwright-core';
 import { writeFileSync } from 'fs';
 const PAGE = process.env.PAGE || 'index.html';
@@ -11,8 +11,8 @@ page.on('pageerror', (e) => errs.push(e.message));
 page.on('console', (m) => m.type() === 'error' && errs.push(m.text()));
 await page.goto(`http://localhost:5178/${PAGE}?render`);
 await page.waitForFunction(() => window.ready === true);
-const data = await page.evaluate((times) => {
-  const cols = 4, cw = 640, ch = 360;
+const data = await page.evaluate(([times, cols]) => {
+  const cw = Math.round(2560 / cols), ch = Math.round(cw * 9 / 16);
   const rows = Math.ceil(times.length / cols);
   const sc = document.createElement('canvas');
   sc.width = cols * cw; sc.height = rows * ch;
@@ -25,7 +25,7 @@ const data = await page.evaluate((times) => {
     x.fillStyle = '#fff'; x.font = '20px sans-serif'; x.fillText(t.toFixed(1), (i % cols) * cw + 8, Math.floor(i / cols) * ch + 22);
   });
   return sc.toDataURL('image/jpeg', 0.85);
-}, ts.map(Number));
+}, [ts.map(Number), +(process.env.COLS || 4)]);
 writeFileSync(out, Buffer.from(data.split(',')[1], 'base64'));
 if (errs.length) console.log('ERRORS:\n' + errs.join('\n'));
 await browser.close();

@@ -128,7 +128,7 @@ export function makeThunder({ from, to, w1, s1, k1, w2, s2, k2, fin }) {
     },
     cel(c, s) {
       const roar = clamp(s.ltc / 0.2);
-      brie(c, { view: 'front', x: GX, y: 1150, s: 3.0, costume: 'lion', ct: s.tc, expr: 'shout', sq: -0.05 * roar + 0.03 * Math.sin(s.tc * 40), tilt: 0.04 * Math.sin(s.tc * 9), earFlop: 1, shadow: false });
+      brie(c, { view: 'front', x: GX, y: 1010, s: 2.1, costume: 'lion', ct: s.tc, expr: 'shout', sq: -0.05 * roar + 0.03 * Math.sin(s.tc * 40), tilt: 0.04 * Math.sin(s.tc * 9), earFlop: 1, shadow: false });
     },
     fx(c, s) {
       for (let i = 0; i < 2; i++) ring(c, GX, 620, s.lt - 0.1 - i * 0.22, 1500, '#fff6a8', 0.55);

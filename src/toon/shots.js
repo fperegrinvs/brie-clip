@@ -40,6 +40,8 @@ export function irisMask(ctx, cx, cy, r) {
   ctx.restore();
 }
 
+const CALM_ZOOM = 0.45, CALM_ROT = 0.6;
+
 export function shotIndex(t) {
   let i = 0;
   while (i + 1 < SHOTS.length && SHOTS[i + 1].t <= t + 1e-6) i++;
@@ -60,8 +62,10 @@ export function renderShot(t, stage) {
   }
 
   let c = sh.cam ? sh.cam(s) : cam();
+  // a calm camera keeps the clip cute: push-ins and dutch tilts are scaled back, the beat pulse is gentle
+  c = { ...c, zoom: c.zoom > 1 ? 1 + (c.zoom - 1) * CALM_ZOOM : c.zoom, rot: (c.rot || 0) * (sh.free ? 1 : CALM_ROT) };
   const hh = handheld(t, sh.hand ?? 0.35, i);
-  const bp = 1 + 0.012 * pulse(t, 7) * energyAt(t) * (sh.punch ?? 1);
+  const bp = 1 + 0.006 * pulse(t, 7) * energyAt(t) * (sh.punch ?? 1);
   c = { x: c.x + hh.x, y: c.y + hh.y, zoom: c.zoom * 1.04 * bp, rot: (c.rot || 0) + hh.rot };
   if (!sh.free) c = fitCam(c);
   s.cam = c;

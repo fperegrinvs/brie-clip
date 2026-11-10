@@ -45,6 +45,11 @@ export function drawBreeSide(ctx, o = {}) {
     ctx.translate(x, -62);
     ctx.rotate(a);
     blob(ctx, [[0, 22, 19, 30, 0], [4, 52, 18, 13, 0]], far ? FUR_DEEP : FUR, lw);
+    // o.shoe draws footwear at the sole of each paw, so it travels with the leg
+    if (o.shoe) {
+      ctx.translate(4, 65);
+      o.shoe(ctx, { view: 'side', angle: a, far });
+    }
     ctx.restore();
   };
   // far legs
@@ -508,6 +513,14 @@ export function drawBreeFront(ctx, o = {}) {
     // front paws
     blob(ctx, [[-34, -50, 22, 40, 0], [-36, -12, 26, 16, 0]], FUR, lw);
     blob(ctx, [[34, -50, 22, 40, 0], [36, -12, 26, 16, 0]], FUR, lw);
+    if (o.shoe) {
+      for (const sx of [-1, 1]) {
+        ctx.save();
+        ctx.translate(sx * 36, 4);
+        o.shoe(ctx, { view: 'front', side: sx });
+        ctx.restore();
+      }
+    }
     ctx.strokeStyle = FUR_DEEP;
     ctx.lineWidth = 3.5;
     for (const sx of [-1, 1]) {

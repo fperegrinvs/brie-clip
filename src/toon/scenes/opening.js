@@ -229,7 +229,7 @@ const tailShot = {
   bg: burstBg('#ffd84d', '#fff3b0', 'rgba(255,255,255,0.9)', 460),
   cel(c, s) {
     const w = Math.sin(s.ltc * 30);
-    brie(c, { x: 1230 + w * 26, y: 930, s: 3.2, dir: 1, rot: w * 0.045, wag: s.ltc * 46, sq: 0.05 * Math.abs(w), eyes: 'happy', mouth: 0.6, shadow: false });
+    brie(c, { x: 1090 + w * 20, y: 880, s: 2.2, dir: 1, rot: w * 0.045, wag: s.ltc * 46, sq: 0.05 * Math.abs(w), eyes: 'happy', mouth: 0.6, shadow: false });
   },
   fx(c, s) {
     // wag arcs
@@ -237,10 +237,10 @@ const tailShot = {
     c.lineWidth = 14;
     c.lineCap = 'round';
     for (let i = 0; i < 3; i++) {
-      const r = 250 + i * 70 + (s.d % 2) * 20;
+      const r = 175 + i * 50 + (s.d % 2) * 14;
       for (const sx of [-1, 1]) {
         c.beginPath();
-        c.arc(960, 600, r, -Math.PI / 2 + sx * 0.5, -Math.PI / 2 + sx * 0.95, sx < 0);
+        c.arc(865, 670, r, -Math.PI / 2 + sx * 0.5, -Math.PI / 2 + sx * 0.95, sx < 0);
         c.stroke();
       }
     }
@@ -295,7 +295,7 @@ const eyesShot = {
   bg: burstBg('#ff9ec4', '#ffe0ee', 'rgba(255,255,255,0.7)', 620),
   cel(c, s) {
     const shut = s.ltc > 0.33 && s.ltc < 0.46;
-    brie(c, { view: 'head', x: W / 2, y: 600, s: 6.2, expr: 'innocent', fEyes: shut ? 'closed' : 'wide', fLook: 0, wag: s.tc * 10, earFlop: 0.2, lw: 4.5 });
+    brie(c, { view: 'head', x: W / 2, y: 590, s: 3.8, expr: 'innocent', fEyes: shut ? 'closed' : 'wide', fLook: 0, wag: s.tc * 10, earFlop: 0.2, lw: 5 });
   },
   fx(c, s) {
     sparkles(c, s.tc, W / 2, 520, 800, 22, 9, '#ffffff');
@@ -397,7 +397,7 @@ const runClose = {
   bg: (c, s) => dayOutdoor(c, s.t, (s.t - RUN0) * 900 + (s.t - 22.6) * 1500),
   cel(c, s) {
     const ph = run(s.tc, 1);
-    brie(c, { x: 820 + Math.sin(s.lt * 2.2) * 40, y: 1190, s: 2.7, phase: ph, ear: 1, mouth: 0.85, eyes: blink(s.tc, 5) ? 'closed' : 'happy', wag: wag(s.tc), lean: 0.14, shadow: false });
+    brie(c, { x: 820 + Math.sin(s.lt * 2.2) * 40, y: 985, s: 1.8, phase: ph, ear: 1, mouth: 0.85, eyes: blink(s.tc, 5) ? 'closed' : 'happy', wag: wag(s.tc), lean: 0.14 });
   },
   fx(c, s) {
     speedLines(c, s.tc, 1, -1, 'rgba(255,255,255,0.8)', 80, 1000);

@@ -1,6 +1,6 @@
 // Build (2:01), the telling-off (2:06), the silence (2:15) and the restart (2:19).
 import { sky, speedLines, focusLines, halftone, sparkles } from '../../fx.js';
-import { fillStroke, clover } from '../../util.js';
+import { fillStroke, clover, blob } from '../../util.js';
 import { bigLabel, COMIC } from '../../text.js';
 import * as P from '../../props.js';
 import { brie, jump, skid, take } from '../actor.js';
@@ -224,7 +224,7 @@ const warmBum = {
   cam: (s) => cam(W / 2 + 30, lerp(600, 580, s.k), lerp(1.5, 1.62, s.k), 0.02),
   bg: bedroomNight,
   cel(c, s) {
-    const peek = s.lt > 0.62;
+    const peek = false; // fast asleep: her eyes stay shut
     brie(c, { x: W / 2 - 20, y: BEDY, s: 1.2, dir: -1, phase: null, eyes: peek ? 'open' : 'closed', look: peek ? -1 : 0, mouth: 0, ear: 0, sq: 0.14 + 0.03 * Math.sin(s.tc * 4), wag: Math.sin(s.tc * 2), shadow: false });
   },
   fx(c, s) {
@@ -243,29 +243,55 @@ const warmBum = {
 
 /* ---------- roubou meu edredom ---------- */
 const TUG0 = 131.74, SNAP = 133.6;
+// The Hand: a soft round fist in a spotty pyjama sleeve, fingers curled around the duvet
+const SKIN = '#ffdcc4', SLEEVE = '#b9a4ff';
 function fist(c, x, y) {
   c.save();
   c.translate(x, y);
+  // sleeve
   c.beginPath();
-  c.roundRect(60, -90, 520, 180, 30);
-  fillStroke(c, '#4c6fff', INK, 8);
-  c.beginPath();
-  c.roundRect(-70, -100, 190, 200, 60);
-  fillStroke(c, '#ffd2b0', INK, 8);
+  c.roundRect(110, -78, 620, 156, 56);
+  fillStroke(c, SLEEVE, INK, 7);
+  c.save();
+  c.clip();
+  c.fillStyle = '#ffffff';
+  for (let i = 0; i < 16; i++) {
+    c.beginPath();
+    c.arc(190 + (i >> 1) * 74 + (i % 2) * 37, i % 2 ? 34 : -34, 11, 0, TAU);
+    c.fill();
+  }
+  c.restore();
+  // fluffy cuff
+  blob(c, [[118, -62, 34], [128, -22, 36], [128, 22, 36], [118, 62, 34]], '#fff6fb', 7);
+  // fist: palm, four curled fingers, and the thumb folded over the top
+  blob(c, [[6, 6, 92, 84, 0], [-66, -50, 32], [-86, -14, 32], [-86, 24, 32], [-66, 58, 30]], SKIN, 7);
   c.strokeStyle = INK;
   c.lineWidth = 5;
-  for (let i = 0; i < 3; i++) {
+  c.lineCap = 'round';
+  for (const [fy, len] of [[-33, 34], [5, 42], [42, 34]]) {
     c.beginPath();
-    c.moveTo(-40, -45 + i * 45);
-    c.lineTo(20, -45 + i * 45);
+    c.moveTo(-104 + (42 - len), fy);
+    c.quadraticCurveTo(-80, fy + 3, -104 + (42 - len) + len, fy);
     c.stroke();
   }
+  blob(c, [[-6, -64, 58, 27, -0.22]], SKIN, 7);
+  // rosy knuckles and a little shine
+  c.fillStyle = 'rgba(255,140,150,0.35)';
+  for (const [kx, ky] of [[-70, -52], [-90, -14], [-90, 24], [-70, 58]]) {
+    c.beginPath();
+    c.ellipse(kx, ky, 15, 11, 0, 0, TAU);
+    c.fill();
+  }
+  c.fillStyle = 'rgba(255,255,255,0.7)';
+  c.beginPath();
+  c.ellipse(-20, -72, 20, 7, -0.22, 0, TAU);
+  c.fill();
   c.restore();
 }
 const tugAt = (t) => {
   const k = clamp((t - TUG0) / (SNAP - TUG0));
   const heave = Math.sin((t - TUG0) * 9);
-  return { k, x: 600 + k * 90 - Math.max(0, heave) * 70 * (1 - k * 0.5), hx: W - 150 + Math.max(0, -heave) * 50 };
+  return { k, x: 600 + k * 90 - Math.max(0, heave) * 70 * (1 - k * 0.5), hx: W - 330 + Math.max(0, -heave) * 50 };
 };
 function tugBg(c, s) {
   room(c, 'bedroom', 900, s.t);
@@ -337,7 +363,7 @@ const snap = {
     const up = clamp((s.lt - 1.3) / 0.4);
     const bx = 900 - Math.sin(s.lt * 3) * 60, by = GY - easeIn(up) * 1500;
     // the hand, left empty and shrinking into the distance
-    if (s.lt < 0.5) fist(c, 1500 + s.lt * 2600, 600);
+    if (s.lt < 0.5) fist(c, 1590 + s.lt * 2600, 600);
     const pts = [];
     for (let i = 0; i <= 14; i++) {
       const d = i * 62;
@@ -375,7 +401,8 @@ function roll(c, breathe, bulge) {
   c.restore();
   c.restore();
 }
-const AWAKE = 2.5, UHOH = 3.05;
+// she nods off at ASLEEP and stays asleep; the duvet starts to rumble at UHOH
+const ASLEEP = 1.3, UHOH = 3.05;
 const burrito = {
   t: 135.34, wash: 0.35, hand: 0.1, punch: 0,
   cam: (s) => cam(lerp(W / 2, W / 2 - 110, easeInOut(s.k)), lerp(600, 740, easeInOut(s.k)), lerp(1.0, 1.45, easeInOut(s.k)), 0),
@@ -409,12 +436,16 @@ const burrito = {
     c.scale(1 + land * 0.75, 1 - land);
     roll(c, 1 + Math.sin(s.tc * 3) * 0.02, rev * Math.abs(Math.sin(s.tc * 20)));
     c.restore();
-    const expr = s.lt < 1.8 ? 'innocent' : s.lt < AWAKE ? 'sleepy' : 'innocent';
-    brie(c, { view: 'head', x: W / 2 - 250 + tr, y: 900 - 170 - (1 - easeIn(fall)) * 1100 + land * 60, rot: -0.15 + (s.lt > AWAKE ? 0.1 : 0), s: 0.95, expr, fEyes: s.lt > UHOH ? 'wide' : s.lt < 1.8 && blink(s.tc, 4) ? 'closed' : undefined, fLook: s.lt > AWAKE && s.lt < UHOH ? (s.lt < AWAKE + 0.28 ? 1 : -1) : 0, earFlop: rev, wag: s.tc * 30 });
+    const asleep = s.lt > ASLEEP;
+    const nod = asleep ? 0.03 * Math.sin(s.tc * 3) : 0;
+    brie(c, {
+      view: 'head', x: W / 2 - 250 + tr, y: 900 - 170 - (1 - easeIn(fall)) * 1100 + land * 60, rot: -0.15 + nod, s: 0.95,
+      expr: asleep ? 'sleepy' : 'innocent', fEyes: asleep || blink(s.tc, 4) || s.lt > ASLEEP - 0.25 ? 'closed' : undefined, earFlop: rev, wag: s.tc * 30,
+    });
   },
   fx(c, s) {
     ring(c, W / 2, 930, s.lt - 0.22, 520, 'rgba(255,236,190,0.9)', 0.3);
-    if (s.lt > 1.8 && s.lt < AWAKE) zzz(c, s.tc, W / 2 - 330, 640);
+    if (s.lt > ASLEEP) zzz(c, s.tc, W / 2 - 330, 640);
     if (s.lt > UHOH) {
       sparkles(c, s.tc, W / 2, 780, 360, 10, 5, '#fff6a8');
       for (let i = 0; i < 6; i++) {

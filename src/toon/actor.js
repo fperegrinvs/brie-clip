@@ -3,6 +3,7 @@
 import { drawBreeSide, drawBreeFront, drawFrontHead } from '../bree.js';
 import { costume } from '../costumes.js';
 import { shadow } from '../fx.js';
+import { skate } from '../props.js';
 import { clamp, lerp, easeOut, easeIn, easeOutBack, easeInOut } from '../util.js';
 
 /**
@@ -84,6 +85,26 @@ export function brie(ctx, o) {
   }
   draw(ctx, o.alpha ?? 1);
 }
+
+/**
+ * Roller skates worn on the paws: pass as o.shoe. Each skate is drawn at the sole of its paw, so
+ * it follows the leg exactly; it stays flat on the floor while the leg swings.
+ * Raise Brie by SKATE_H * s so the wheels (not the paws) touch the ground.
+ */
+const SKATE_K = 0.6;
+export const SKATE_H = 38 * SKATE_K;
+export const skates = (spin = 0) => (ctx, i) => {
+  ctx.save();
+  if (i.view === 'side') {
+    ctx.rotate(-i.angle);
+    skate(ctx, 15 * SKATE_K, 0, SKATE_K, spin);
+  } else {
+    // front view: toes out
+    ctx.scale(i.side, 1);
+    skate(ctx, 15 * SKATE_K + 6, 0, SKATE_K, spin);
+  }
+  ctx.restore();
+};
 
 /* ---------- motion primitives: pure functions of local time, return options for brie() ---------- */
 

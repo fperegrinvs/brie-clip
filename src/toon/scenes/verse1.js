@@ -162,7 +162,8 @@ const glassShot = {
     const sq = 0.3 * (1 - 0.3 * slip) + 0.14 * Math.exp(-s.ltc * 9) * Math.cos(s.ltc * 26);
     for (const sx of [-1, 1]) {
       c.save();
-      c.translate(W / 2 + sx * 700, y - 40 + sx * 30);
+      c.translate(W / 2 + sx * 620, y - 40 + sx * 30);
+      c.scale(0.8, 0.8);
       c.rotate(sx * 0.35);
       blob(c, [[0, 0, 130, 150, 0], [-70, -130, 50], [0, -160, 54], [70, -130, 50]], '#fdfbff', 12);
       c.fillStyle = '#ffb3cf';
@@ -173,7 +174,7 @@ const glassShot = {
       }
       c.restore();
     }
-    brie(c, { view: 'head', x: W / 2, y, s: 4.6, sq, expr: 'innocent', fEyes: 'wide', fLook: 0, earFlop: 0.2, tilt: 0.06, lw: 5 });
+    brie(c, { view: 'head', x: W / 2, y, s: 3.6, sq, expr: 'innocent', fEyes: 'wide', fLook: 0, earFlop: 0.2, tilt: 0.06, lw: 5 });
   },
   fx(c, s) {
     ring(c, W / 2, 520, s.ltc, 1500, '#ffffff', 0.35);
@@ -203,7 +204,7 @@ const cuteShot = {
   bg: cuteBg,
   cel(c, s) {
     const shut = blink(s.tc, 4) || (s.ltc > 1.2 && s.ltc < 1.34);
-    brie(c, { view: 'front', x: W / 2, y: 960, s: 3, expr: 'innocent', fEyes: shut ? 'closed' : undefined, wag: wag(s.tc) * 0.5, tilt: key(s.ltc, [[0.9, 0], [1.3, 0.16, 'back']]), earFlop: 0.2 });
+    brie(c, { view: 'front', x: W / 2, y: 930, s: 2.2, expr: 'innocent', fEyes: shut ? 'closed' : undefined, wag: wag(s.tc) * 0.5, tilt: key(s.ltc, [[0.9, 0], [1.3, 0.16, 'back']]), earFlop: 0.2 });
   },
   fx(c, s) {
     hearts(c, s.tc, 18, 3);
@@ -216,14 +217,15 @@ const cuteClose = {
   bg: cuteBg,
   cel(c, s) {
     const smirk = s.ltc > 0.62;
-    brie(c, { view: 'head', x: W / 2, y: 590, s: 5.0, expr: smirk ? 'happy' : 'innocent', fEyes: s.ltc > 0.42 && s.ltc < 0.56 ? 'closed' : smirk ? 'happy' : 'wide', tilt: smirk ? 0.12 * easeOutBack((s.ltc - 0.62) / 0.2) : 0, sq: smirk ? 0.07 * Math.exp(-(s.ltc - 0.62) * 8) : 0, earFlop: 0.3, lw: 5 });
+    brie(c, { view: 'head', x: W / 2, y: 580, s: 3.5, expr: smirk ? 'happy' : 'innocent', fEyes: s.ltc > 0.42 && s.ltc < 0.56 ? 'closed' : smirk ? 'happy' : 'wide', tilt: smirk ? 0.12 * easeOutBack((s.ltc - 0.62) / 0.2) : 0, sq: smirk ? 0.07 * Math.exp(-(s.ltc - 0.62) * 8) : 0, earFlop: 0.3, lw: 5 });
   },
   fx(c, s) {
     sparkles(c, s.tc, W / 2, 520, 820, 22, 9, '#ffffff');
     if (s.ltc > 0.62) for (let i = 0; i < 2; i++) {
       // glint
       c.save();
-      c.translate(i ? 1290 : 660, 330);
+      c.translate(i ? 1191 : 729, 398);
+      c.scale(0.7, 0.7);
       c.rotate(s.tc * 2);
       c.fillStyle = '#ffffff';
       c.beginPath();

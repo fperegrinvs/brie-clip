@@ -4,7 +4,7 @@ import { blob, fillStroke, noise } from '../../util.js';
 import { bigLabel } from '../../text.js';
 import * as P from '../../props.js';
 import { costume, withRocket } from '../../costumes.js';
-import { brie } from '../actor.js';
+import { brie, skates, SKATE_H } from '../actor.js';
 import { cam, crash, shake } from '../camera.js';
 import { W, H, INK, TAU, clamp, lerp, easeOut, easeIn, easeInOut, easeOutBack, rand, key, run, wag, puff, ring, frac } from '../kit.js';
 
@@ -279,15 +279,19 @@ function track(c, x0, x1, yOf, color) {
   c.lineWidth = 12;
   c.stroke();
 }
-function rider(c, x, yOf, sc, tc, draw) {
+// own = the rider wears her own skates (drawn on her paws), so only place her on the rail
+function rider(c, x, yOf, sc, tc, draw, own) {
   const a = Math.atan2(yOf(x + 20) - yOf(x - 20), 40);
   c.save();
   c.translate(x, yOf(x) - 12);
   c.rotate(a);
   c.scale(sc, sc);
-  P.skate(c, -50, 0, 1, tc * 30);
-  P.skate(c, 80, 0, 1, tc * 30);
-  c.translate(0, -58);
+  if (own) c.translate(0, 26);
+  else {
+    P.skate(c, -50, 0, 1, tc * 30);
+    P.skate(c, 80, 0, 1, tc * 30);
+    c.translate(0, -58);
+  }
   draw();
   c.restore();
 }
@@ -328,10 +332,12 @@ const ride = {
       P.cabbageBuddy(c, 84, s.tc, 4);
     });
     const hop = railA(x) < -0.25 ? 0.1 : 0;
+    // she wears the skates: they are drawn on her paws and brace with her legs
+    const brace = 0.12 * Math.sin(s.ltc * 20);
     rider(c, x, railY, 1.2, s.tc, () => {
-      c.rotate(Math.sin(s.ltc * 20) * 0.06);
-      brie(c, { x: 0, y: 0, s: 1.05, shadow: false, phase: null, ear: 1, mouth: 1, eyes: 'wide', wag: wag(s.tc), sq: -hop, lean: -0.1, costume: 'cabbage', ct: s.tc });
-    });
+      brie(c, { x: 0, y: -SKATE_H * 1.25, s: 1.25, shadow: false, phase: null, ear: 1, mouth: 1, eyes: 'wide', wag: wag(s.tc), sq: -hop, lean: -0.1,
+        legs: [-0.28 + brace, 0.28 + brace], pitch: 0.05 * Math.sin(s.ltc * 20), bob: 0, shoe: skates(s.tc * 30), costume: 'cabbage', ct: s.tc });
+    }, true);
   },
   fx(c, s) {
     const x = rideX(s.lt), a = railA(x);

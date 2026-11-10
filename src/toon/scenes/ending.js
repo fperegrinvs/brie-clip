@@ -4,7 +4,7 @@ import { fillStroke, clover } from '../../util.js';
 import { bigLabel, COMIC, logo } from '../../text.js';
 import { drawSeatedCrown } from '../../bree.js';
 import * as P from '../../props.js';
-import { brie, skid } from '../actor.js';
+import { brie, skid, skates, SKATE_H } from '../actor.js';
 import { cam, crash, shake } from '../camera.js';
 import { W, H, INK, TAU, clamp, lerp, easeOut, easeIn, easeInOut, easeOutBack, key, wag, blink, run, puff, ring, pow, frac, rand, lerpColor } from '../kit.js';
 
@@ -393,27 +393,17 @@ function roadside(c, t, tc, speed = 1.35, y = 1052, r = 82) {
 }
 
 function marcher(c, m, i, s, o = {}) {
-  const skates = m.kind === 'cabbage';
+  const rolling = m.kind === 'cabbage';
   const beat = (run(s.tc, 0.5) + i * 0.17) * Math.PI * 2;
-  // the côve rolls: no hop, just a skating sway, and the skates stay on her paws when she jumps
-  const hop = skates ? 0 : 30 * Math.abs(Math.sin(beat));
+  // the côve rolls: no hop, just an easy skating stride; the skates are worn on her paws
+  const hop = rolling ? 0 : 30 * Math.abs(Math.sin(beat));
   const x = m.x + (o.dx ?? 0), y = ROAD - hop - (o.lift ?? 0);
   const sc = m.s * (o.k ?? 1);
-  const k = sc / 0.66;
   const air = clamp((o.lift ?? 0) / 60);
-  const stride = skates ? Math.sin(beat) * 12 * k * (1 - air) : 0;
-  if (skates) {
-    c.save();
-    c.translate(x, y - 40 * k);
-    c.rotate(Math.sin(beat) * 0.05 - 0.22 * air);
-    c.translate(-x, -(y - 40 * k));
-    P.skate(c, x - 34 * k - stride, y - 8 * k * air, sc, s.tc * 12);
-    P.skate(c, x + 52 * k + stride, y, sc, s.tc * 12);
-    c.restore();
-  }
+  const stride = 0.2 * Math.sin(beat) * (1 - air);
   brie(c, {
-    x, y: y - (skates ? 40 * k : 0), ground: ROAD, s: sc, phase: skates ? null : run(s.tc + i * 0.1, 1), amp: 0.7, ear: 0.4, wag: wag(s.tc + i),
-    ...(skates ? { rot: Math.sin(beat) * 0.05 - 0.22 * air, legs: [0.22 + stride / (60 * k), -0.22 - stride / (60 * k)], lean: 0.08 } : {}),
+    x, y: y - (rolling ? SKATE_H * sc : 0), ground: ROAD, s: sc, phase: rolling ? null : run(s.tc + i * 0.1, 1), amp: 0.7, ear: 0.4, wag: wag(s.tc + i),
+    ...(rolling ? { shoe: skates(s.tc * 12), rot: -0.22 * air, legs: [stride - 0.3 * air, -stride + 0.3 * air], bob: -3 * Math.abs(Math.sin(beat)), lean: 0.08 } : {}),
     mouth: 0.5, eyes: 'happy', costume: m.kind || undefined, ct: s.tc,
     ...(m.kind ? {} : { cape: { t: s.tc }, crown: true, headTilt: -0.12 }),
   });
@@ -515,16 +505,10 @@ const bow = (i, t0, side) => {
       const b = key(s.lt, [[0.3, 0], [0.55, 0.36, 'out'], [0.82, -0.1, 'back'], [1.05, 0]]);
       const down = s.lt > 0.36 && s.lt < 0.74;
       // the côve keeps her skates on for her bow, toes out
-      const sk = m.kind === 'cabbage' ? 1.15 : 0;
-      for (const sx of sk ? [-1, 1] : []) {
-        c.save();
-        c.translate(W / 2 + sx * 78, 1040 - 38 * sk);
-        c.scale(sx, 1);
-        P.skate(c, 0, 0, sk, 0);
-        c.restore();
-      }
+      const sk = m.kind === 'cabbage';
       brie(c, {
-        view: 'front', x: W / 2, y: 1040 - 78 * sk, ground: 1040, s: 1.75, costume: m.kind, ct: s.tc, sq: b, wag: wag(s.tc),
+        view: 'front', x: W / 2, y: 1040 - (sk ? (SKATE_H + 4) * 1.75 : 0), ground: 1040, s: 1.75, costume: m.kind, ct: s.tc, sq: b, wag: wag(s.tc),
+        ...(sk ? { shoe: skates(0) } : {}),
         expr: 'happy', fEyes: down ? 'closed' : 'happy', fMouth: down ? 0.15 : 0.8, tilt: down ? 0 : side * 0.07, earFlop: down ? 1 : 0.3,
       });
     },
@@ -553,7 +537,7 @@ const leader = {
     const a = s.lt - BARK;
     const bark = a > 0 && a < 0.7;
     brie(c, {
-      x: 820, y: 1030 - 26 * Math.abs(Math.sin(run(s.tc, 0.5) * TAU)), ground: 1030, s: 2.1, phase: run(s.tc, 1), amp: 0.6, ear: 0.5, wag: wag(s.tc),
+      x: 860, y: 1030 - 22 * Math.abs(Math.sin(run(s.tc, 0.5) * TAU)), ground: 1030, s: 1.7, phase: run(s.tc, 1), amp: 0.6, ear: 0.5, wag: wag(s.tc),
       cape: { t: s.tc * 1.2 }, crown: true, pitch: -0.08, headTilt: bark ? -0.3 : -0.14, eyes: bark ? 'happy' : blink(s.t, 2) ? 'closed' : 'open',
       mouth: bark ? 0.6 + 0.4 * Math.sin(a * 30) : 0.3, sq: bark ? -0.06 * Math.exp(-a * 6) : 0,
     });
