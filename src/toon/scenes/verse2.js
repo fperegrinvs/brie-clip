@@ -417,6 +417,15 @@ const flyIn = {
 
 /* ---------- um "cocodrilo" fugindo do zoológico ---------- */
 const CAUGHT = 1.15;
+// little crocodiles from the zoo, tagging along on her escape
+const KIDS = [[0.62, 0], [0.5, 0.37], [0.56, 0.71]];
+function crocKid(c, x, y, k, phase, tag) {
+  c.save();
+  c.translate(x, y);
+  c.scale(k, k);
+  P.croc(c, phase, { tag });
+  c.restore();
+}
 const sneak = {
   t: 105.7, tr: 'fluff', hand: 0.3, punch: 0.6,
   tint: () => [0.82, 0.86, 1.08],
@@ -429,6 +438,12 @@ const sneak = {
     const tk = take(s.ltc, CAUGHT);
     const caught = s.lt >= CAUGHT;
     const x = lerp(620, 1040, clamp(s.lt / CAUGHT));
+    // they sneak out in a line behind her, and freeze with a little jump when the lights hit
+    KIDS.forEach(([k, off], i) => {
+      const a = s.ltc - CAUGHT - 0.06 * i;
+      const hop = a > 0 ? 70 * Math.exp(-a * 4) * Math.abs(Math.sin(a * 11)) : 0;
+      crocKid(c, x - 350 - i * 175, GY - 44 - (i % 2) * 22 - hop, k, caught ? 0 : frac(s.ltc * 1.6 + off) * 0.5 + (i % 2) * 0.5, i === 0);
+    });
     brie(c, { x, y: GY, s: 1.25, costume: 'croc', ct: s.tc, wag: 0, ...(caught ? { sq: tk.sq, eyes: 'wide', ear: 0.6, mouth: 0.4, look: -1, legs: [0.3, -0.3] } : tiptoe(s.lt, 3.4)) });
   },
   fx(c, s) {
@@ -449,6 +464,11 @@ const escape = {
   },
   cel(c, s) {
     const bx = 1040 + Math.sin(s.lt * 2.5) * 90;
+    // the little ones run for it too, further back
+    [[1700, 0], [1470, 1], [370, 2]].forEach(([kx, i]) => {
+      const [k, off] = KIDS[i];
+      crocKid(c, kx + Math.sin(s.lt * 3 + i * 2) * 45, GY - 62 - (i % 2) * 24, k, frac(s.ltc * 4.5 + off), i === 0);
+    });
     brie(c, { x: bx, y: GY, s: 1.35, costume: 'croc', ct: s.tc, phase: frac(s.lt * 6), amp: 1, ear: 1, mouth: 0.9, eyes: blink(s.tc, 3) ? 'closed' : 'happy', wag: wag(s.tc), lean: 0.24, trail: { dx: 80, dy: 0, n: 2 } });
     // the keeper's net, always one swipe behind
     const sw = Math.sin(s.lt * 7);
@@ -532,18 +552,7 @@ function astronaut(c, s) {
     c.fill();
     P.ufoToy(c, 130);
   });
-  const ringHalf = (a0, a1) => local(c, p.x, p.y, p.r, 1.35, () => {
-    c.translate(20, -110);
-    c.rotate(-0.25);
-    c.beginPath();
-    c.ellipse(0, 0, 230, 52, 0, a0, a1);
-    c.lineWidth = 12;
-    c.strokeStyle = '#b77dff';
-    c.stroke();
-  });
-  ringHalf(Math.PI, TAU);
   brie(c, { x: p.x, y: p.y, s: 1.35, rot: p.r, costume: 'cheese', ct: s.tc, phase: frac(s.tc * 0.6), amp: 0.5, ear: 0.2, mouth: 0.7, eyes: blink(s.tc, 1) ? 'closed' : 'happy', wag: wag(s.tc) * 0.3, shadow: false });
-  ringHalf(0, Math.PI);
   local(c, p.x, p.y, p.r, 1.35, () => {
     c.beginPath();
     c.arc(98, -165, 105, 0, TAU);
