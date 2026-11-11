@@ -1,5 +1,5 @@
 // Brie — a fluffy white Havanese puppy, drawn procedurally.
-import { TAU, INK, blob, fillStroke, clover, clamp, lerp } from './util.js';
+import { TAU, INK, blob, fillStroke, clover, clamp, lerp, rand, DETAIL, shadeBlob, drawScale } from './util.js';
 
 const FUR = '#ffffff';
 const FUR_SHADE = '#e9e3f2';
@@ -8,6 +8,42 @@ const NOSE = '#231a2b';
 const TONGUE = '#ff7d9c';
 const BLUSH = 'rgba(255,140,170,0.45)';
 const BOW = '#37c45c';
+
+/* ---- detail mode (DETAIL.on, the cartoon cut): curls, form shadow, richer face ---- */
+const SHADE_FAR = '#c8bedb';
+const CURL_A = '#e1d9ee', CURL_B = '#cdc2df';
+const FINE = 0.5; // below this on-screen scale the fine strokes are left out
+const CURLS = {};
+// evenly scattered little curl marks inside an ellipse: [x, y, r, startAngle, deep]
+function curlSet(key, n, cx, cy, rx, ry, seed) {
+  if (CURLS[key]) return CURLS[key];
+  const out = [];
+  for (let i = 0; i < n; i++) {
+    const r = Math.sqrt((i + 0.5) / n), a = i * 2.39996 + seed;
+    out.push([cx + Math.cos(a) * rx * r, cy + Math.sin(a) * ry * r, 6 + rand(i + seed * 7) * 5, Math.PI * 0.95 + (rand(i * 3 + seed) - 0.5) * 1.3, i % 3 === 0]);
+  }
+  return (CURLS[key] = out);
+}
+function curls(ctx, list, lw = 3) {
+  ctx.save();
+  ctx.lineCap = 'round';
+  ctx.lineWidth = lw;
+  for (const [x, y, r, rot, deep] of list) {
+    ctx.strokeStyle = deep ? CURL_B : CURL_A;
+    ctx.beginPath();
+    ctx.arc(x, y, r, rot, rot + 3.1);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+// extra small bumps along a ring, so the fluffy outline is less regular
+function fringe(shapes, n, cx, cy, rx, ry, seed, r0 = 12, r1 = 8, skip) {
+  for (let i = 0; i < n; i++) {
+    const a = (i / n) * TAU + 0.17 + seed, k = 1.03 + 0.06 * rand(i + seed * 31);
+    if (skip && skip(a)) continue;
+    shapes.push([cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k, r0 + rand(i + seed * 17 + 9) * r1]);
+  }
+}
 
 /* ------------------------------------------------------------------ */
 /* Side view (facing right). Origin = ground under the body centre.    */
@@ -44,7 +80,30 @@ export function drawBreeSide(ctx, o = {}) {
     ctx.save();
     ctx.translate(x, -62);
     ctx.rotate(a);
-    blob(ctx, [[0, 22, 19, 30, 0], [4, 52, 18, 13, 0]], far ? FUR_DEEP : FUR, lw);
+    const shp = [[0, 22, 19, 30, 0], [4, 52, 18, 13, 0]];
+    blob(ctx, shp, far ? FUR_DEEP : FUR, lw);
+    if (DETAIL.on) {
+      shadeBlob(ctx, shp, far ? FUR_DEEP : FUR, far ? SHADE_FAR : FUR_SHADE, 8);
+      // toes, and a pink pad when the sole swings into view
+      ctx.strokeStyle = far ? '#b6aacd' : CURL_B;
+      ctx.lineWidth = 3;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(1, 54);
+      ctx.lineTo(2, 62);
+      ctx.moveTo(11, 53);
+      ctx.lineTo(12, 61);
+      ctx.stroke();
+      if (a > 0.45 && !o.shoe) {
+        ctx.save();
+        ctx.globalAlpha *= clamp((a - 0.45) * 4);
+        ctx.fillStyle = '#ff9db5';
+        ctx.beginPath();
+        ctx.ellipse(3, 59.5, 10, 3.6, 0, 0, TAU);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
     // o.shoe draws footwear at the sole of each paw, so it travels with the leg
     if (o.shoe) {
       ctx.translate(4, 65);
@@ -57,7 +116,7 @@ export function drawBreeSide(ctx, o = {}) {
   leg(-58, bA * 0.8 - 0.15, true);
 
   // tail plume curling over the back
-  if (!o.noTail) drawTail(ctx, -78, -112, o.wag ?? 0, lw);
+  if (!o.noTail) drawTail(ctx, -78, -112, o.wag ?? 0, lw, DETAIL.on ? (o.tailSwing ?? 0) : 0);
 
   // body cloud with fur fringe
   const body = [[0, -92, 98, 56, 0]];
@@ -67,7 +126,15 @@ export function drawBreeSide(ctx, o = {}) {
   }
   // belly fringe hanging down
   for (let i = 0; i < 6; i++) body.push([-60 + i * 24, -44 + (i % 2) * 6, 16]);
+  const fine = DETAIL.on && drawScale(ctx) > FINE;
+  if (DETAIL.on) {
+    fringe(body, 17, 0, -92, 94, 54, 1);
+    body.push([-100, -112, 17], [-106, -96, 12], [94, -64, 17], [-74, -40, 13], [66, -40, 13]);
+    // o.furLean: the fringe drags behind the stride, most along the back
+    if (o.furLean) for (let i = 1; i < body.length; i++) body[i][0] -= o.furLean * (5 + 9 * clamp((-92 - body[i][1]) / 52, -0.3, 1));
+  }
   blob(ctx, body, FUR, lw);
+  if (DETAIL.on) shadeBlob(ctx, body, FUR, FUR_SHADE, 15);
   // soft shading on the belly
   ctx.save();
   ctx.globalAlpha = 0.55;
@@ -76,21 +143,24 @@ export function drawBreeSide(ctx, o = {}) {
   ctx.ellipse(0, -62, 80, 22, 0, 0, TAU);
   ctx.fill();
   ctx.restore();
-  // fur strokes
-  ctx.strokeStyle = FUR_DEEP;
-  ctx.lineWidth = 4;
-  ctx.lineCap = 'round';
-  for (let i = 0; i < 5; i++) {
-    const x = -60 + i * 28;
-    ctx.beginPath();
-    ctx.moveTo(x, -110 + (i % 2) * 10);
-    ctx.quadraticCurveTo(x - 10, -95, x - 4, -80);
-    ctx.stroke();
+  if (fine) curls(ctx, curlSet('sideBody', 15, -6, -98, 76, 34, 3), 3.2);
+  else {
+    // fur strokes
+    ctx.strokeStyle = FUR_DEEP;
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    for (let i = 0; i < 5; i++) {
+      const x = -60 + i * 28;
+      ctx.beginPath();
+      ctx.moveTo(x, -110 + (i % 2) * 10);
+      ctx.quadraticCurveTo(x - 10, -95, x - 4, -80);
+      ctx.stroke();
+    }
   }
 
   if (o.cape && capeStyle(o.cape) === 'drape') {
     drawCapeDrape(ctx, o.cape, lw);
-    if (!o.noTail) drawTail(ctx, -78, -112, o.wag ?? 0, lw);
+    if (!o.noTail) drawTail(ctx, -78, -112, o.wag ?? 0, lw, DETAIL.on ? (o.tailSwing ?? 0) : 0);
   }
   o.overBody?.(ctx, o, 'side');
   // near legs
@@ -324,10 +394,11 @@ function drawFrontCollar(ctx, lw, wag) {
   drawTag(ctx, 0, -110, 0.12 * Math.sin(wag * 0.5), lw);
 }
 
-function drawTail(ctx, x, y, wag, lw) {
+function drawTail(ctx, x, y, wag, lw, swing = 0) {
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(-0.25 + 0.28 * Math.sin(wag));
+  if (swing) ctx.rotate(swing);
   const pts = [];
   for (let i = 0; i <= 9; i++) {
     const t = i / 9;
@@ -335,10 +406,19 @@ function drawTail(ctx, x, y, wag, lw) {
     const R = lerp(20, 62, Math.sin(t * Math.PI * 0.9));
     pts.push([Math.cos(a) * R * 0.9 + 20, -Math.sin(a) * R * 1.2 - 10 - t * 40, lerp(26, 16, t)]);
   }
+  if (DETAIL.on) {
+    // loose curls along the plume
+    for (let i = 1; i <= 9; i++) {
+      const [px, py, r] = pts[i];
+      pts.push([px + (rand(i + 70) - 0.5) * r * 1.5, py + (rand(i + 80) - 0.6) * r * 1.1, r * 0.5]);
+    }
+  }
   blob(ctx, pts, FUR, lw);
-  ctx.strokeStyle = FUR_DEEP;
+  if (DETAIL.on) shadeBlob(ctx, pts, FUR, FUR_SHADE, 9);
+  ctx.strokeStyle = DETAIL.on ? CURL_B : FUR_DEEP;
+  ctx.lineCap = DETAIL.on ? 'round' : ctx.lineCap;
   ctx.lineWidth = 3.5;
-  for (let i = 2; i < 8; i += 2) {
+  for (let i = DETAIL.on ? 1 : 2; i < (DETAIL.on ? 9 : 8); i += DETAIL.on ? 1 : 2) {
     const [px, py] = pts[i];
     ctx.beginPath();
     ctx.moveTo(px - 8, py + 2);
@@ -360,7 +440,20 @@ function drawSideHead(ctx, x, y, o, lw) {
   }
   // topknot
   head.push([-6, -60, 24], [14, -66, 18], [-24, -54, 18]);
+  const fine = DETAIL.on && drawScale(ctx) > FINE;
+  if (DETAIL.on) head.push([-60, 16, 14], [-52, 36, 13], [-32, 52, 14], [-66, -10, 12], [2, -78, 12], [-38, -46, 12], [28, -60, 11], [-12, -82, 9]);
   blob(ctx, head, FUR, lw);
+  if (DETAIL.on) shadeBlob(ctx, head, FUR, FUR_SHADE, 10);
+  if (fine) {
+    curls(ctx, curlSet('sideHead', 7, -22, -22, 30, 30, 5), 3);
+    // whisker dots
+    ctx.fillStyle = CURL_B;
+    for (const [wx, wy] of [[60, 22], [68, 28], [58, 31]]) {
+      ctx.beginPath();
+      ctx.arc(wx, wy, 2, 0, TAU);
+      ctx.fill();
+    }
+  }
 
 
   // blush
@@ -387,6 +480,12 @@ function drawSideHead(ctx, x, y, o, lw) {
       ctx.strokeStyle = '#d9496d';
       ctx.lineWidth = 2.5;
       ctx.stroke();
+      if (DETAIL.on) {
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.beginPath();
+        ctx.ellipse(67, 42 + 18 * m, 3, 2 + 4 * m, 0.2, 0, TAU);
+        ctx.fill();
+      }
     }
   } else {
     ctx.beginPath();
@@ -405,38 +504,142 @@ function drawSideHead(ctx, x, y, o, lw) {
   ctx.beginPath();
   ctx.ellipse(86, 7, 5, 3, -0.3, 0, TAU);
   ctx.fill();
+  if (DETAIL.on) {
+    ctx.beginPath();
+    ctx.ellipse(84, 6, 6.5, 3.6, -0.3, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.beginPath();
+    ctx.arc(96, 17, 2.4, 0, TAU);
+    ctx.fill();
+  }
 
-  drawEye(ctx, 34, -6, o.eyes ?? 'open', 1, o.look ?? 0);
+  drawEye(ctx, 34, -6, o.eyes ?? 'open', 1, o.look ?? 0, -1);
 
   // ear (droopy, streams backwards when running)
   const ear = clamp(o.ear ?? 0);
   ctx.save();
   ctx.translate(-14, -30);
   ctx.rotate(0.15 + ear * 0.9 + (o.earFlop ?? 0));
-  blob(
-    ctx,
-    [[-8, 26, 26, 36, 0.1], [-14, 58, 24, 22, 0], [-2, 72, 16], [-24, 74, 14]],
-    '#f7f3fb',
-    lw,
-  );
-  ctx.strokeStyle = FUR_DEEP;
+  if (DETAIL.on && o.earSwing) ctx.rotate(o.earSwing);
+  const earShape = [[-8, 26, 26, 36, 0.1], [-14, 58, 24, 22, 0], [-2, 72, 16], [-24, 74, 14]];
+  if (DETAIL.on) earShape.push([-34, 60, 11], [8, 62, 11], [-13, 84, 11], [-36, 38, 9]);
+  blob(ctx, earShape, '#f7f3fb', lw);
+  if (DETAIL.on) shadeBlob(ctx, earShape, '#f7f3fb', '#e2daee', 9);
+  ctx.strokeStyle = DETAIL.on ? CURL_B : FUR_DEEP;
   ctx.lineWidth = 3.5;
+  ctx.lineCap = DETAIL.on ? 'round' : ctx.lineCap;
   for (let i = 0; i < 3; i++) {
     ctx.beginPath();
     ctx.moveTo(-18 + i * 9, 20);
     ctx.quadraticCurveTo(-24 + i * 9, 50, -16 + i * 9, 70);
     ctx.stroke();
   }
+  if (fine) {
+    ctx.strokeStyle = CURL_A;
+    ctx.lineWidth = 2.6;
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.moveTo(-23 + i * 10, 34);
+      ctx.quadraticCurveTo(-30 + i * 10, 58, -22 + i * 10, 80);
+      ctx.stroke();
+    }
+  }
   ctx.restore();
   if (o.crown) drawSeatedCrown(ctx, 0, -70, 0.8, -0.12, lw);
   ctx.restore();
 }
 
-function drawEye(ctx, x, y, kind, s = 1, look = 0) {
+// The detailed eye: dark, slightly green (hazel-green iris), with lid shadow, lashes and sparkle.
+// out = -1 / 1: which side the outer corner (and the lashes) is on.
+function detailEye(ctx, kind, look, out) {
+  const lash = (pts) => {
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 2.8;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    for (const [x0, y0, x1, y1] of pts) {
+      ctx.moveTo(out * x0, y0);
+      ctx.lineTo(out * x1, y1);
+    }
+    ctx.stroke();
+  };
+  if (kind === 'happy') return lash([[12, 4, 18, 1], [9, -2, 14, -7]]);
+  if (kind === 'closed') return lash([[12, 0, 18, 3], [8.5, 4, 12.5, 9.5]]);
+  const big = kind === 'wide' ? 1.25 : 1;
+  const rx = 13 * big, ry = 16 * big;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, rx, ry, 0, 0, TAU);
+  ctx.fillStyle = '#17131c';
+  ctx.fill();
+  ctx.save();
+  ctx.clip();
+  const ix = look * 3, iy = 3 * big;
+  const g = ctx.createRadialGradient(ix, iy + 4 * big, 1, ix, iy, 12.5 * big);
+  g.addColorStop(0, '#75904a');
+  g.addColorStop(0.5, '#43582f');
+  g.addColorStop(1, '#1e281a');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.ellipse(ix, iy, 10.8 * big, 12.4 * big, 0, 0, TAU);
+  ctx.fill();
+  // light pooled at the bottom of the iris
+  ctx.fillStyle = 'rgba(160,188,104,0.55)';
+  ctx.beginPath();
+  ctx.ellipse(ix, iy + 8 * big, 6.6 * big, 3.4 * big, 0, 0, TAU);
+  ctx.fill();
+  // pupil
+  ctx.fillStyle = '#100c15';
+  ctx.beginPath();
+  ctx.ellipse(ix + look, iy - 1.5 * big, 5.4 * big, 6.6 * big, 0, 0, TAU);
+  ctx.fill();
+  // shadow under the upper lid
+  ctx.fillStyle = 'rgba(16,10,22,0.5)';
+  ctx.beginPath();
+  ctx.ellipse(0, -ry * 1.05, rx * 1.4, ry * 0.72, 0, 0, TAU);
+  ctx.fill();
+  ctx.restore();
+  // highlights
+  ctx.fillStyle = '#fff';
+  ctx.beginPath();
+  ctx.arc(-4 + look * 4, -6 * big, 5.6 * big, 0, TAU);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(5 + look * 4, 6.5 * big, 2.5 * big, 0, TAU);
+  ctx.fill();
+  ctx.globalAlpha *= 0.85;
+  ctx.beginPath();
+  ctx.arc(-7.5 + look * 4, 3 * big, 1.5 * big, 0, TAU);
+  ctx.fill();
+  if (kind === 'wide') {
+    // an extra four-point sparkle
+    ctx.beginPath();
+    ctx.ellipse(6.5 * big, -8 * big, 1.1 * big, 4.2 * big, 0, 0, TAU);
+    ctx.ellipse(6.5 * big, -8 * big, 4.2 * big, 1.1 * big, 0, 0, TAU);
+    ctx.fill();
+  }
+  ctx.globalAlpha /= 0.85;
+  // heavier lid line and two lashes at the outer corner
+  ctx.strokeStyle = INK;
+  ctx.lineWidth = 3.2;
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.ellipse(0, 0, rx, ry, 0, Math.PI * 1.06, Math.PI * 1.94);
+  ctx.stroke();
+  lash([[rx * 0.86, -ry * 0.52, rx * 1.32, -ry * 0.8], [rx * 0.6, -ry * 0.8, rx * 0.9, -ry * 1.2]]);
+}
+
+function drawEye(ctx, x, y, kind, s = 1, look = 0, out = -1) {
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(s, s);
   ctx.lineCap = 'round';
+  if (DETAIL.on && kind !== 'happy' && kind !== 'closed') {
+    detailEye(ctx, kind, look, out);
+    ctx.restore();
+    return;
+  }
+  if (DETAIL.on) detailEye(ctx, kind, look, out);
   if (kind === 'happy') {
     ctx.beginPath();
     ctx.moveTo(-12, 4);
@@ -492,7 +695,11 @@ export function drawBreeFront(ctx, o = {}) {
     ctx.save();
     ctx.translate(70, -70);
     ctx.rotate(0.5 + 0.35 * Math.sin(o.wag ?? 0));
-    blob(ctx, [[10, -10, 24], [26, -36, 22], [30, -62, 18], [20, -82, 14]], FUR, lw);
+    if (DETAIL.on && o.tailSwing) ctx.rotate(o.tailSwing);
+    const ft = [[10, -10, 24], [26, -36, 22], [30, -62, 18], [20, -82, 14]];
+    if (DETAIL.on) ft.push([44, -30, 11], [46, -58, 10], [34, -84, 9], [10, -92, 9]);
+    blob(ctx, ft, FUR, lw);
+    if (DETAIL.on) shadeBlob(ctx, ft, FUR, FUR_SHADE, 9);
     ctx.restore();
   }
   if (!o.bodyless) {
@@ -502,7 +709,12 @@ export function drawBreeFront(ctx, o = {}) {
       const a = (i / 12) * TAU;
       body.push([Math.cos(a) * 80, -92 + Math.sin(a) * 80, 22 + (i % 2) * 4]);
     }
+    if (DETAIL.on) fringe(body, 15, 0, -92, 84, 84, 2, 11, 7, (a) => Math.sin(a) < -0.55);
     blob(ctx, body, FUR, lw);
+    if (DETAIL.on) {
+      shadeBlob(ctx, body, FUR, FUR_SHADE, 15);
+      if (drawScale(ctx) > FINE) curls(ctx, curlSet('frontBody', 12, 0, -84, 62, 46, 4), 3.2);
+    }
     ctx.fillStyle = FUR_SHADE;
     ctx.globalAlpha = 0.6;
     ctx.beginPath();
@@ -511,8 +723,11 @@ export function drawBreeFront(ctx, o = {}) {
     ctx.globalAlpha = 1;
     o.overBody?.(ctx, o, 'front');
     // front paws
-    blob(ctx, [[-34, -50, 22, 40, 0], [-36, -12, 26, 16, 0]], FUR, lw);
-    blob(ctx, [[34, -50, 22, 40, 0], [36, -12, 26, 16, 0]], FUR, lw);
+    for (const sx of [-1, 1]) {
+      const paw = [[sx * 34, -50, 22, 40, 0], [sx * 36, -12, 26, 16, 0]];
+      blob(ctx, paw, FUR, lw);
+      if (DETAIL.on) shadeBlob(ctx, paw, FUR, FUR_SHADE, 8);
+    }
     if (o.shoe) {
       for (const sx of [-1, 1]) {
         ctx.save();
@@ -553,14 +768,29 @@ export function drawFrontHead(ctx, expr, lw = 6, o = {}) {
     ctx.rotate(o.earOut != null
       ? sx * (0.25 + earDrop - o.earOut) + (o.earFlop ?? 0) * 0.35 * Math.sin((o.wag ?? 0) * 2)
       : sx * (0.25 + earDrop + (o.earFlop ?? 0) * Math.sin((o.wag ?? 0) * 2 + sx)));
-    blob(ctx, [[sx * 8, 34, 28, 44, 0], [sx * 12, 76, 24, 22, 0], [sx * 2, 92, 14], [sx * 22, 90, 14]], '#f7f3fb', lw);
-    ctx.strokeStyle = FUR_DEEP;
+    if (DETAIL.on && o.earSwing) ctx.rotate(o.earSwing);
+    const earShape = [[sx * 8, 34, 28, 44, 0], [sx * 12, 76, 24, 22, 0], [sx * 2, 92, 14], [sx * 22, 90, 14]];
+    if (DETAIL.on) earShape.push([sx * 34, 74, 11], [sx * 12, 102, 11], [sx * 36, 48, 9], [sx * -12, 82, 10]);
+    blob(ctx, earShape, '#f7f3fb', lw);
+    if (DETAIL.on) shadeBlob(ctx, earShape, '#f7f3fb', '#e2daee', 9);
+    ctx.strokeStyle = DETAIL.on ? CURL_B : FUR_DEEP;
     ctx.lineWidth = 3.5;
+    ctx.lineCap = DETAIL.on ? 'round' : ctx.lineCap;
     for (let i = 0; i < 3; i++) {
       ctx.beginPath();
       ctx.moveTo(sx * (-2 + i * 9), 26);
       ctx.quadraticCurveTo(sx * (-8 + i * 9), 60, sx * (i * 9), 88);
       ctx.stroke();
+    }
+    if (DETAIL.on && drawScale(ctx) > FINE) {
+      ctx.strokeStyle = CURL_A;
+      ctx.lineWidth = 2.6;
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.moveTo(sx * (3 + i * 9), 40);
+        ctx.quadraticCurveTo(sx * (-3 + i * 9), 70, sx * (5 + i * 9), 96);
+        ctx.stroke();
+      }
     }
     ctx.restore();
   }
@@ -570,9 +800,26 @@ export function drawFrontHead(ctx, expr, lw = 6, o = {}) {
     head.push([Math.cos(a) * 70, Math.sin(a) * 62, 18 + (i % 2) * 4]);
   }
   head.push([0, -70, 26], [-22, -64, 20], [22, -64, 20]);
+  const fine = DETAIL.on && drawScale(ctx) > FINE;
+  if (DETAIL.on) {
+    fringe(head, 13, 0, 0, 74, 66, 6, 10, 6);
+    head.push([-12, -90, 12], [10, -92, 11], [-38, -74, 12], [38, -74, 12], [-82, 34, 13], [82, 34, 13], [0, -98, 8]);
+  }
   blob(ctx, head, FUR, lw);
+  if (DETAIL.on) shadeBlob(ctx, head, FUR, FUR_SHADE, 12);
+  if (fine) curls(ctx, curlSet('frontHead', 9, 0, -48, 50, 20, 7), 3);
   // muzzle
   blob(ctx, [[0, 30, 40, 28, 0]], '#fbf9fd', 0);
+  if (fine) {
+    ctx.fillStyle = CURL_B;
+    for (const sx of [-1, 1]) {
+      for (const [wx, wy] of [[22, 25], [29, 31], [21, 36]]) {
+        ctx.beginPath();
+        ctx.arc(sx * wx, wy, 2.1, 0, TAU);
+        ctx.fill();
+      }
+    }
+  }
   if (o.crown) drawSeatedCrown(ctx, 0, -76, 1, 0, lw);
 
   // blush
@@ -581,12 +828,17 @@ export function drawFrontHead(ctx, expr, lw = 6, o = {}) {
     ctx.beginPath();
     ctx.ellipse(sx * 46, 22, 15, 9, 0, 0, TAU);
     ctx.fill();
+    if (fine) {
+      ctx.beginPath();
+      ctx.ellipse(sx * 46, 22, 9, 5, 0, 0, TAU);
+      ctx.fill();
+    }
   }
   // eyes
   const eyes = o.fEyes ?? ({ innocent: 'wide', happy: 'happy', guilty: 'open', shout: 'closed', sleepy: 'closed' }[expr] || 'open');
   const look = o.fLook ?? (expr === 'guilty' ? -1 : 0);
-  drawEye(ctx, -30, -6, eyes, 1.15, look);
-  drawEye(ctx, 30, -6, o.fEyeR ?? eyes, 1.15, look);
+  drawEye(ctx, -30, -6, eyes, 1.15, look, -1);
+  drawEye(ctx, 30, -6, o.fEyeR ?? eyes, 1.15, look, 1);
   if (expr === 'innocent') {
     // sparkly brows
     ctx.strokeStyle = INK;
@@ -617,6 +869,15 @@ export function drawFrontHead(ctx, expr, lw = 6, o = {}) {
   ctx.beginPath();
   ctx.ellipse(-5, 11, 5, 3, 0, 0, TAU);
   ctx.fill();
+  if (DETAIL.on) {
+    ctx.beginPath();
+    ctx.ellipse(-5.5, 10.5, 7, 3.8, -0.15, 0, TAU);
+    ctx.fill();
+    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.beginPath();
+    ctx.arc(7, 21, 2.4, 0, TAU);
+    ctx.fill();
+  }
   // mouth
   ctx.strokeStyle = INK;
   ctx.lineWidth = 4;
@@ -631,6 +892,18 @@ export function drawFrontHead(ctx, expr, lw = 6, o = {}) {
     ctx.beginPath();
     ctx.ellipse(0, 36 + 30 * m, 12, 6 + 10 * m, 0, 0, TAU);
     fillStroke(ctx, TONGUE, INK, 4);
+    if (DETAIL.on) {
+      ctx.strokeStyle = '#d9496d';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(0, 34 + 26 * m);
+      ctx.lineTo(0, 38 + 36 * m);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.beginPath();
+      ctx.ellipse(-5, 34 + 28 * m, 3, 2 + 4 * m, 0, 0, TAU);
+      ctx.fill();
+    }
   } else {
     ctx.beginPath();
     ctx.moveTo(-16, 34);

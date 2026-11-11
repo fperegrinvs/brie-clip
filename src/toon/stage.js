@@ -4,7 +4,7 @@
 //   cel – characters and props: line boil (re-seeded per drawing) + cel rim shadow
 //   fx  – effects and comic labels: boil, no shadow
 import { W, H } from '../fx.js';
-import { rand } from '../util.js';
+import { rand, DETAIL } from '../util.js';
 
 const mk = () => {
   const c = document.createElement('canvas');
@@ -42,6 +42,11 @@ uniform float uImpact;  // 0 none, 1 white-on-black, 2 black-on-white
 uniform float uHasFx;
 uniform float uWash;    // background wash strength
 uniform vec3 uTint;     // overall light colour
+uniform float uFin;     // 1 = the detailed finish (rim light, depth shadow, glow, pigment, vignette)
+uniform float uRim;     // rim light strength
+uniform float uDepth;   // shadow the characters cast on the set
+uniform float uGlow;    // bloom on bright paint
+uniform float uVig;     // vignette strength
 
 vec2 n2(vec2 p) { return texture2D(uNoise, p / 32.0).rg - 0.5; }
 float n1(vec2 p) { return texture2D(uNoise, p / 32.0).b - 0.5; }
@@ -81,6 +86,38 @@ void main() {
   float sh = smoothstep(0.75, 0.97, c.a) * (1.0 - smoothstep(0.25, 0.75, a1));
   c.rgb *= mix(vec3(1.0), vec3(0.73, 0.69, 0.9), sh);
 
+  vec3 glow = vec3(0.0);
+  if (uFin > 0.5) {
+    // dry-brush streaks in the paint
+    float br = n1(vec2(world.x / 420.0, world.y / 34.0) + 2.1) + 0.6 * n1(vec2(world.x / 160.0, world.y / 13.0) + 7.7);
+    b *= 1.0 + uWash * 0.05 * br;
+    // pigment pooling inside the cel fills, a little different on every drawing
+    c.rgb *= 1.0 - 0.05 * (0.5 + n1(px / 95.0 + uSeed * 3.0) + 0.5 * n1(px / 23.0 + uSeed.yx * 2.0));
+    // rim light: the edge that faces the light warms up, so the line reads as coloured
+    float a2 = texture2D(uCel, (px + dC - uShadow * 0.55) / uRes).a;
+    float rim = smoothstep(0.6, 0.97, c.a) * (1.0 - smoothstep(0.2, 0.8, a2));
+    c.rgb += (vec3(1.0, 0.84, 0.6) * c.a - c.rgb) * 0.34 * rim * uRim;
+    // soft shadow the characters cast on the set, and bloom from bright paint:
+    // a few taps on a spiral, turned per pixel so the softness has a pastel tooth
+    float ang = hash(scr + 1.3) * 6.2832;
+    float ds = 0.0;
+    for (int i = 0; i < 8; i++) {
+      float fi = float(i);
+      float a = ang + fi * 2.39996;
+      vec2 dir = vec2(cos(a), sin(a));
+      float r = sqrt((fi + 0.5) / 8.0);
+      ds += texture2D(uCel, (px + dC + uShadow * 1.5 + dir * r * 30.0) / uRes).a;
+      vec2 gp = px + dir * r * 46.0;
+      vec4 gc = texture2D(uCel, (gp + dC) / uRes);
+      vec3 gb = texture2D(uBg, (gp + dB) / uRes).rgb * (1.0 - gc.a) + gc.rgb;
+      if (uHasFx > 0.5) { vec4 gf = texture2D(uFx, (gp + dC * 0.7) / uRes); gb = gb * (1.0 - gf.a) + gf.rgb; }
+      float l = dot(gb, vec3(0.299, 0.587, 0.114));
+      glow += gb * smoothstep(0.8, 1.0, l);
+    }
+    ds /= 8.0; glow /= 8.0;
+    b *= mix(vec3(1.0), vec3(0.74, 0.69, 0.86), ds * uDepth);
+  }
+
   vec3 col = b * (1.0 - c.a) + c.rgb;
   if (uImpact > 0.5) {
     float lum = dot(c.rgb, vec3(0.299, 0.587, 0.114)) / max(c.a, 0.001);
@@ -89,6 +126,14 @@ void main() {
     col = mix(vec3(0.07, 0.02, 0.12), vec3(1.0, 0.98, 0.9), v);
   }
   col = col * (1.0 - f.a) + f.rgb;
+  if (uFin > 0.5 && uImpact < 0.5) {
+    // bloom (screened on, so it shows most against the dark), a top-to-bottom falloff and the vignette
+    col = 1.0 - (1.0 - col) * (1.0 - glow * uGlow);
+    col *= 1.0 + 0.05 * (0.45 - vUv.y);
+    vec2 vv = (vUv - 0.5) * vec2(1.0, 0.82);
+    float vg = smoothstep(0.34, 0.86, length(vv));
+    col *= mix(vec3(1.0), vec3(0.6, 0.53, 0.76), vg * uVig);
+  }
   col *= uTint;
   // paper grain
   float g = hash(floor(scr / 2.0)) - 0.5;
@@ -118,7 +163,7 @@ function init() {
   gl.enableVertexAttribArray(loc);
   gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
   U = {};
-  for (const n of ['uBg', 'uCel', 'uFx', 'uNoise', 'uRes', 'uCam', 'uSeed', 'uBoil', 'uBlur', 'uShift', 'uTaps', 'uShadow', 'uImpact', 'uHasFx', 'uWash', 'uTint']) U[n] = gl.getUniformLocation(prog, n);
+  for (const n of ['uBg', 'uCel', 'uFx', 'uNoise', 'uRes', 'uCam', 'uSeed', 'uBoil', 'uBlur', 'uShift', 'uTaps', 'uShadow', 'uImpact', 'uHasFx', 'uWash', 'uTint', 'uFin', 'uRim', 'uDepth', 'uGlow', 'uVig']) U[n] = gl.getUniformLocation(prog, n);
   const mkTex = (unit, wrap) => {
     const t = gl.createTexture();
     gl.activeTexture(gl.TEXTURE0 + unit);
@@ -173,7 +218,8 @@ export function begin() {
 
 /**
  * Combine the layers into `out` (a 2D context).
- * look: { cam:{x,y,zoom}, drawing (int, changes per new drawing), boil, blur:[x,y], impact, wash, tint:[r,g,b], useFx }
+ * look: { cam:{x,y,zoom}, drawing (int, changes per new drawing), boil, blur:[x,y], impact, wash, tint:[r,g,b], useFx,
+ *         rim, depth, glow, vig (detailed finish strengths), finish:false to switch the finish off }
  */
 export function compose(out, look = {}) {
   out.setTransform(1, 0, 0, 1, 0, 0);
@@ -209,6 +255,11 @@ export function compose(out, look = {}) {
   gl.uniform1f(U.uHasFx, useFx ? 1 : 0);
   gl.uniform1f(U.uWash, look.wash ?? 1);
   gl.uniform3f(U.uTint, tint[0], tint[1], tint[2]);
+  gl.uniform1f(U.uFin, DETAIL.on && look.finish !== false ? 1 : 0);
+  gl.uniform1f(U.uRim, look.rim ?? 1);
+  gl.uniform1f(U.uDepth, look.depth ?? 1);
+  gl.uniform1f(U.uGlow, look.glow ?? 0.24);
+  gl.uniform1f(U.uVig, look.vig ?? 0.5);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   out.drawImage(glC, 0, 0);
 }

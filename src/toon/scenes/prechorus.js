@@ -1,6 +1,7 @@
 // Pre-chorus (0:56 to 1:03): lion roar, cheese rocket, croc chomp, côve on skates.
 import { sky, sunburst, focusLines, halftone, speedLines, flash } from '../../fx.js';
-import { blob, fillStroke, noise } from '../../util.js';
+import { blob, fillStroke, noise, DETAIL } from '../../util.js';
+import { smoke, pool } from '../paint.js';
 import { bigLabel } from '../../text.js';
 import * as P from '../../props.js';
 import { costume, withRocket } from '../../costumes.js';
@@ -87,9 +88,13 @@ const lionMouth = {
 
 /* ---------------- cheese rocket ---------------- */
 const LIFT = 0.56;
+const NX = W / 2 - 104, NY = 229; // where the nozzle sits, measured from Brie's launch position
 const padY = (lt) => 820 - easeIn(clamp((lt - LIFT) / 0.62)) * 1500;
+// the engine sputters on the pad, then the flame grows as she climbs clear of it
+const thrust = (s) => (s.lt < LIFT - 0.3 ? 0 : s.lt < LIFT ? 0.24 + 0.1 * (s.d % 2) : clamp(0.34 + (820 - padY(s.lt)) / 330, 0.34, 1.15));
+const SMOKE = ['#ffe9a8', '#fff6dc', '#ffffff', '#ffffff', '#f6f0fd'];
 const launch = {
-  t: 57.4, tr: 'whipR', hand: 0.4,
+  t: 57.4, tr: 'whipR', hand: 0.4, glow: 0.45,
   cam: (s) => {
     const sh = s.lt < LIFT ? [rand(s.d) * 14 - 7, rand(s.d + 3) * 14 - 7] : shake(s.lt - LIFT, 46, s.d, 0.6);
     return cam(W / 2 + sh[0], lerp(600, 420, easeInOut(clamp((s.lt - LIFT + 0.1) / 0.6))) + sh[1], 1.08);
@@ -122,13 +127,30 @@ const launch = {
       phase: null, ear: up ? 1 : 0.2, mouth: up ? 1 : 0.3, eyes: up ? 'happy' : 'wide', wag: wag(s.tc),
       stretch: up ? 1 + 0.5 * clamp((s.lt - LIFT) / 0.3) : 1 - 0.12 * clamp(s.lt / LIFT),
       trail: up ? { dx: 0, dy: -130, n: 3 } : null,
-      ...withRocket(costume('cheese', s.tc), s.tc),
+      ...withRocket(costume('cheese', s.tc), s.tc, thrust(s)),
     });
   },
   fx(c, s) {
     const y = padY(s.lt);
     // exhaust column and pad smoke
-    if (s.lt > LIFT - 0.3) {
+    if (s.lt > LIFT - 0.3 && DETAIL.on) {
+      const grow = easeOut(clamp((s.lt - LIFT + 0.3) / 0.9));
+      pool(c, NX, 900, 520, 70, '255,170,70', 0.5 * (1 - clamp((s.lt - LIFT) / 0.7)));
+      // the column she leaves behind: hot near the flame, billowing wider toward the pad
+      const top = y + NY + 300 * thrust(s);
+      for (let i = 13; i >= 0; i--) {
+        const py = top + i * 84;
+        if (py > 905 || py < top) continue;
+        const k = clamp((py - top) / 700);
+        smoke(c, NX + noise(i * 1.7 + s.tc * 6) * 26 * (1 + k), py, 52 + 70 * k + 8 * rand(i + s.d), i * 9 + (s.d % 3), SMOKE[Math.min(i, 4)]);
+      }
+      // smoke rolling out across the pad
+      for (let i = 9; i >= 0; i--) {
+        const side = i % 2 ? 1 : -1, j = Math.floor(i / 2);
+        const dist = 90 + (120 + j * 150) * grow;
+        smoke(c, NX + side * dist, 892 - (j % 2) * 26 - grow * 24 * (j % 3), (66 + j * 12) * (0.5 + 0.5 * grow) + 6 * rand(i + s.d * 3), i * 5 + (s.d % 3), j > 2 ? '#f6f0fd' : '#ffffff');
+      }
+    } else if (s.lt > LIFT - 0.3) {
       for (let i = 0; i < 9; i++) {
         const py = y + 60 + i * 110;
         if (py > 900) break;
@@ -145,7 +167,7 @@ const launch = {
   },
 };
 const flight = {
-  t: 58.6, tr: 'whipU', hand: 1.2, punch: 1.5,
+  t: 58.6, tr: 'whipU', hand: 1.2, punch: 1.5, glow: 0.45,
   cam: (s) => cam(W / 2, H / 2, 1.05, -0.06 + Math.sin(s.lt * 4) * 0.03),
   bg(c, s) {
     c.fillStyle = '#4cb8ff';
@@ -157,7 +179,15 @@ const flight = {
   cel(c, s) {
     const out = easeIn(clamp((s.lt - 0.82) / 0.3));
     const x = 820 + Math.sin(s.lt * 3) * 120 + out * 1700, y = 560 + Math.sin(s.lt * 7) * 70 - out * 500;
-    for (let i = 10; i >= 1; i--) blob(c, [[x - 150 - i * 115, y - 60 + Math.sin((s.lt - i * 0.035) * 7) * 70 + i * 6, 30 + i * 9]], i < 2 ? '#ffd84d' : '#ffffff', 5);
+    if (DETAIL.on) {
+      // the smoke trail follows the path she just flew, swelling and thinning as it falls behind
+      for (let i = 11; i >= 1; i--) {
+        c.save();
+        c.globalAlpha = clamp(1.25 - i / 11);
+        smoke(c, x - 290 - i * 104, y - 70 + Math.sin((s.lt - i * 0.035) * 7) * 70 + i * 7, 40 + i * 11 + 6 * rand(i + s.d), i * 7 + (s.d % 3), SMOKE[Math.min(i - 1, 4)]);
+        c.restore();
+      }
+    } else for (let i = 10; i >= 1; i--) blob(c, [[x - 150 - i * 115, y - 60 + Math.sin((s.lt - i * 0.035) * 7) * 70 + i * 6, 30 + i * 9]], i < 2 ? '#ffd84d' : '#ffffff', 5);
     brie(c, {
       x, y: y + 130, s: 1.45, rot: -0.14 + Math.cos(s.lt * 7) * 0.1 - out * 0.4, shadow: false, phase: null, ear: 1, mouth: 1, eyes: 'happy', wag: wag(s.tc),
       stretch: 1 + out * 0.8, trail: out > 0 ? { dx: 150, dy: -40, n: 3 } : null, ...withRocket(costume('cheese', s.tc), s.tc),

@@ -4,7 +4,8 @@ import { drawBreeSide, drawBreeFront, drawFrontHead } from '../bree.js';
 import { costume } from '../costumes.js';
 import { shadow } from '../fx.js';
 import { skate } from '../props.js';
-import { clamp, lerp, easeOut, easeIn, easeOutBack, easeInOut } from '../util.js';
+import { clamp, lerp, easeOut, easeIn, easeOutBack, easeInOut, DETAIL, TAU, rand, fillStroke } from '../util.js';
+import { glint } from './paint.js';
 
 /**
  * o.view   'side' | 'front' | 'head'
@@ -17,7 +18,110 @@ import { clamp, lerp, easeOut, easeIn, easeOutBack, easeInOut } from '../util.js
  * o.ground y of the floor for the contact shadow (defaults to o.y); o.shadow=false disables it
  * o.costume  'lion' | 'croc' | 'cheese' | 'cabbage' | 'worm' (o.ct = costume clock)
  * everything else is passed to the drawing (phase, legs, mouth, eyes, ear, wag, expr, crown, cape ...)
+ *
+ * In the detailed style she is never quite still: she breathes, blinks and glances about when a shot
+ * leaves her eyes alone, her ears, tail and fur lag behind the stride and the squash, and her paws kick
+ * up dust. o.life=false turns all of it off; o.blink=false, o.breath=false, o.puffs=false one at a time.
+ * o.vel [vx, vy] (px/s) adds drag on ears, tail and fur for a big move.
  */
+const frac = (v) => v - Math.floor(v);
+const CLOCK = { tc: 0, ltc: 0, i: 0, n: 0 };
+/** The shot clock, handed over once per frame before the shot is drawn. */
+export function setActorClock(s) {
+  CLOCK.tc = s.tc;
+  CLOCK.ltc = s.ltc;
+  CLOCK.i = s.i;
+  CLOCK.n = 0;
+}
+
+function alive(o, view) {
+  const id = CLOCK.i * 7.31 + CLOCK.n++ * 3.17;
+  const a = { ...o };
+  const running = o.phase != null, sq = o.sq ?? 0;
+  let ear = o.earSwing ?? 0, tail = o.tailSwing ?? 0, fur = o.furLean ?? 0;
+  if (view === 'side') {
+    if (running) {
+      // the stride: ears flap a beat behind the bob, the plume a beat behind the ears
+      const ph = o.phase * TAU, amp = o.amp ?? 1;
+      ear += 0.2 * amp * Math.sin(ph - 1.9);
+      tail += 0.15 * amp * Math.sin(ph - 2.7);
+      fur += amp * (0.6 + 0.4 * Math.sin(ph - 1.2));
+    }
+    // squash and stretch: ears stream on the way up and flop on the landing, the plume answers
+    ear += -sq * (sq < 0 ? 0.9 : 0.55);
+    tail += sq * 0.7;
+    if (o.vel) {
+      const dx = clamp((o.vel[0] * (o.dir ?? 1)) / 1800, -1, 1), dy = clamp(o.vel[1] / 1600, -1, 1);
+      ear += 0.3 * dx + 0.32 * dy;
+      tail += -0.2 * dx + 0.22 * dy;
+      fur += Math.max(0, dx);
+    }
+    if (o.blink !== false && o.eyes == null) {
+      if (blinking(id)) a.eyes = 'closed';
+      else if (!running && o.look == null) {
+        // now and then a glance to one side
+        const D = 1.9 + rand(id + 3), k = Math.floor(CLOCK.ltc / D), r = rand(k * 5.3 + id);
+        if (k > 0 && r > 0.55 && CLOCK.ltc - k * D < 0.75) a.look = r > 0.8 ? -0.7 : 0.7;
+      }
+    }
+  } else {
+    // seen from the front both ears lift together on a stretch and splay on a squash
+    if (o.earOut != null) a.earOut = o.earOut + sq * (sq < 0 ? 0.9 : 0.6);
+    tail += sq * 0.5;
+    const e = o.expr ?? 'happy';
+    if (o.blink !== false && o.fEyes == null && (e === 'innocent' || e === 'guilty') && blinking(id)) a.fEyes = 'closed';
+  }
+  if (view !== 'head' && !running && !o.air && o.breath !== false && Math.abs(sq) < 0.03) {
+    a.sq = sq + 0.013 * Math.sin(CLOCK.tc * 2.5 + id);
+  }
+  if (ear) a.earSwing = ear;
+  if (tail) a.tailSwing = tail;
+  if (fur) a.furLean = fur;
+  return a;
+}
+
+function blinking(id) {
+  const T = 2.7 + 1.5 * rand(id + 1), first = 0.8 + 1.2 * rand(id + 2);
+  return CLOCK.ltc >= first && (CLOCK.ltc - first) % T < 0.16;
+}
+
+/** Dust from the paws, fur shaken loose on a skid, a twinkle where she lands. */
+function kicked(ctx, o, view, x, gy, s, dir) {
+  if ((o.alpha ?? 1) < 1) return;
+  const grounded = o.shadow !== false && !o.air && Math.abs(gy - (o.y ?? 0)) < 8 * s;
+  if (view === 'side' && o.phase != null && (o.amp ?? 1) > 0.6 && !o.shoe && grounded && o.puffs !== false && (o.stretch ?? 1) < 1.3 && !o.skidding) {
+    for (const off of [0.08, 0.58]) {
+      const k = frac(o.phase + off) / 0.7;
+      if (k >= 1) continue;
+      const px = x - dir * s * (64 + 150 * easeOut(k)), py = gy - s * (10 + 30 * k), r = s * 15 * (1 - k * k);
+      for (const [dx, dy, kr] of [[0, 0, 1], [-18, 7, 0.7], [11, -11, 0.55]]) {
+        if (r * kr < 1.5) continue;
+        ctx.beginPath();
+        ctx.arc(px + dir * dx * s, py + dy * s, r * kr, 0, TAU);
+        fillStroke(ctx, '#ffffff', '#3a2a5c', Math.max(2, 3.5 * s));
+      }
+    }
+  }
+  if (o.skidding > 0.05 && o.puffs !== false) {
+    // tufts of fur fly on ahead of her
+    const u = 1 - o.skidding;
+    for (let i = 0; i < 5; i++) {
+      const px = x + dir * s * (70 + u * (150 + 70 * i)), py = (o.y ?? 0) - s * (50 + i * 34 + 46 * Math.sin(u * Math.PI) - 60 * u * u);
+      const r = s * (8 - i) * (1 - u * 0.6);
+      if (r < 1.5) continue;
+      ctx.beginPath();
+      ctx.arc(px, py, r, 0, TAU);
+      fillStroke(ctx, '#ffffff', '#3a2a5c', Math.max(2, 3 * s));
+    }
+  }
+  if (o.landAge != null && o.landAge < 0.34 && o.puffs !== false) {
+    const k = o.landAge / 0.34;
+    for (let i = 0; i < 4; i++) {
+      const sd = i < 2 ? -1 : 1, far = i % 2;
+      glint(ctx, x + sd * s * (70 + (90 + far * 60) * easeOut(k)), gy - s * (14 + (30 + far * 44) * easeOut(k)), s * (20 - far * 6) * (1 - k), 1 - k * 0.5, '#ffe58a');
+    }
+  }
+}
 const EAR_OUT = 0.55;
 const ghost = document.createElement('canvas');
 ghost.width = 1920;
@@ -25,13 +129,21 @@ ghost.height = 1080;
 
 export function brie(ctx, o) {
   const view = o.view || 'side';
+  if (DETAIL.on && o.life !== false) o = alive(o, view);
   const s = o.s ?? 1, dir = o.dir ?? 1;
   const x = o.x ?? 0, y = o.y ?? 0;
   if (o.shadow !== false && view !== 'head') {
     const gy = o.ground ?? y;
     const lift = clamp((gy - y) / (500 * s));
-    shadow(ctx, x, gy + 4, (view === 'side' ? 110 : 100) * s * (1 - 0.5 * lift), 0.18 * (1 - 0.6 * lift));
+    const rx = (view === 'side' ? 110 : 100) * s * (1 - 0.5 * lift);
+    if (DETAIL.on) {
+      // a wide soft pool and a darker core where she touches the ground
+      shadow(ctx, x, gy + 7, rx * 1.3, 0.08 * (1 - 0.5 * lift));
+      shadow(ctx, x, gy + 5, rx, 0.12 * (1 - 0.6 * lift));
+      shadow(ctx, x, gy + 4, rx * 0.62, 0.12 * (1 - 0.9 * lift));
+    } else shadow(ctx, x, gy + 4, rx, 0.18 * (1 - 0.6 * lift));
   }
+  if (DETAIL.on && o.life !== false && view !== 'head') kicked(ctx, o, view, x, o.ground ?? y, s, dir);
   // front views always show both ears, splayed out from behind the head
   const base = view === 'side' ? o : { earOut: EAR_OUT, ...o };
   const pose = o.costume ? { ...base, ...costume(o.costume, o.ct ?? 0) } : base;
@@ -128,6 +240,7 @@ export function jump(lt, j) {
       sq: -0.26 * edge, pitch: -0.38 * (1 - 2 * u) * (j.pitch ?? 1), bob: 0,
       legs: [lerp(-1.0, 0.25, 1 - edge) * (u < 0.5 ? 1 : 0.9), lerp(1.0, -0.25, 1 - edge) * (u < 0.5 ? 1 : 0.2)],
       ear: 0.4 + 0.6 * u, air: true, u,
+      vel: [(x1 - x0) / dur, (y1 - y0) / dur - (j.h * 4 * (1 - 2 * u)) / dur],
     };
   }
   const a = lt - (t0 + dur);

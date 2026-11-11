@@ -2,9 +2,12 @@
 import { W, H } from '../fx.js';
 import { sectionAt, LYRICS, DURATION, setAnalysis } from '../timeline.js';
 import { loadFonts, karaoke, burstWord, softText, narration } from '../text.js';
-import { clamp } from '../util.js';
+import { clamp, setDetail } from '../util.js';
 import * as stage from './stage.js';
 import { renderShot } from './shots.js';
+
+// the richer drawing style; cartoon.html?plain shows the cut without it
+setDetail(!/[?&]plain\b/.test(location.search));
 
 const canvas = document.getElementById('c');
 canvas.width = W;
@@ -38,7 +41,7 @@ export function render(t) {
     ctx.save();
     if (l.kind === 'sing') karaoke(ctx, l, t);
     else if (l.kind === 'soft') softText(ctx, l, t);
-    else if (l.kind === 'narr') narration(ctx, l, t);
+    else if (l.kind === 'narr') narration(ctx, l, t, l.cues);
     ctx.restore();
   }
   look.top?.(ctx);

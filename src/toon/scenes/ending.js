@@ -1,6 +1,7 @@
 // Outro (2:52), the four hero poses (3:02), the parade (3:08) and the goodnight iris (3:27).
 import { sky, sunburst, twinkleStars, confetti, firework, sparkles, speedLines, focusLines, halftone } from '../../fx.js';
-import { fillStroke, clover } from '../../util.js';
+import { fillStroke, clover, DETAIL } from '../../util.js';
+import { pool, vgrad, glint, petals } from '../paint.js';
 import { bigLabel, COMIC, logo } from '../../text.js';
 import { drawSeatedCrown } from '../../bree.js';
 import * as P from '../../props.js';
@@ -29,11 +30,34 @@ function sunsetSky(c, t, sunY = 330, sunX = 1500, sunR = 120) {
   sky(c, '#ff9ec4', '#ffe0a8');
   P.sun(c, sunX, sunY, sunR, t);
   P.clouds(c, t, 0, 0.1, 140, 0.9);
+  if (DETAIL.on) {
+    // the sun spills gold across the sky; birds head home
+    pool(c, sunX, sunY, sunR * 5.5, sunR * 3.4, '255,214,120', 0.42);
+    vgrad(c, -400, 430, W + 800, 330, 'rgba(255,190,140,0)', 'rgba(255,190,140,0.5)');
+    c.strokeStyle = 'rgba(110,60,120,0.75)';
+    c.lineWidth = 4;
+    c.lineCap = 'round';
+    for (let i = 0; i < 6; i++) {
+      const x = ((260 + i * 96 + (i % 2) * 40 + t * 22) % (W + 300)) - 150, y = 250 + (i % 3) * 44 + i * 9 + Math.sin(t * 0.8 + i) * 8;
+      const f = Math.sin(t * 7 + i * 1.3) * 7, sc = 0.8 + (i % 3) * 0.2;
+      c.beginPath();
+      c.moveTo(x - 17 * sc, y - f);
+      c.quadraticCurveTo(x - 8 * sc, y - 9 * sc, x, y);
+      c.quadraticCurveTo(x + 8 * sc, y - 9 * sc, x + 17 * sc, y - f);
+      c.stroke();
+    }
+  }
   P.hills(c, 0, 720, 50, '#c4b0ff', 0, 2);
 }
 function sunsetLand(c, t) {
+  if (DETAIL.on) vgrad(c, -400, 640, W + 800, 220, 'rgba(255,225,190,0)', 'rgba(255,225,190,0.45)');
   P.castle(c, 700, 760, 0.8, { t });
   P.hills(c, 0, 880, 50, '#7ad46a', 0, 4, true);
+  if (DETAIL.on) {
+    // the low sun warms the grass; seeds drift on the evening air
+    vgrad(c, -400, 860, W + 800, 260, 'rgba(255,200,120,0.22)', 'rgba(255,200,120,0)');
+    petals(c, t, 10, ['#fff3c4', '#ffffff', '#ffd1e3'], 9, 34, 420, 1000);
+  }
 }
 
 // 1 · she gallops up the hill, the camera cranes up and back to find the castle
@@ -340,6 +364,44 @@ function paradeBg(c, t, dusk = duskAt(t), speed = 1) {
   c.fillRect(-400, ROAD - 86, W + 800, 190);
   c.fillStyle = lerpColor('#62c85f', '#56a865', dusk);
   c.fillRect(-400, ROAD + 100, W + 800, 400);
+  if (DETAIL.on) {
+    // a packed-earth road: pebbles, wheel ruts, shade along the far verge; grass tufts on the near one
+    vgrad(c, -400, ROAD - 86, W + 800, 46, 'rgba(170,110,60,0.3)', 'rgba(170,110,60,0)');
+    vgrad(c, -400, ROAD + 40, W + 800, 60, 'rgba(170,110,60,0)', 'rgba(170,110,60,0.22)');
+    for (let i = 0; i < 46; i++) {
+      const x = W + 300 - frac((camX + i * 61.7 + rand(i) * 40) / 2700) * 2700;
+      const y = ROAD - 66 + rand(i * 3.3) * 150;
+      c.fillStyle = i % 3 ? 'rgba(190,140,90,0.55)' : 'rgba(255,250,230,0.7)';
+      c.beginPath();
+      c.ellipse(x, y, 5 + rand(i * 5) * 7, 3 + rand(i * 7) * 3, 0, 0, TAU);
+      c.fill();
+    }
+    c.strokeStyle = 'rgba(190,140,90,0.4)';
+    c.lineWidth = 5;
+    c.setLineDash([160, 70]);
+    c.lineDashOffset = camX;
+    for (const ry of [ROAD - 30, ROAD + 34]) {
+      c.beginPath();
+      c.moveTo(-400, ry);
+      c.lineTo(W + 400, ry);
+      c.stroke();
+    }
+    c.setLineDash([]);
+    c.lineDashOffset = 0;
+    c.strokeStyle = lerpColor('#3fa650', '#3b8a52', dusk);
+    c.lineWidth = 4;
+    c.lineCap = 'round';
+    for (let i = 0; i < 26; i++) {
+      const x = W + 300 - frac((camX + i * 104 + rand(i + 9) * 50) / 2704) * 2704;
+      for (const dx of [-9, 0, 9]) {
+        c.beginPath();
+        c.moveTo(x + dx, ROAD + 112);
+        c.lineTo(x + dx * 1.9, ROAD + 90 - Math.abs(dx));
+        c.stroke();
+      }
+    }
+    vgrad(c, -400, ROAD + 100, W + 800, 200, 'rgba(20,70,40,0)', 'rgba(20,70,40,0.25)');
+  }
   c.strokeStyle = INK;
   c.lineWidth = 6;
   c.beginPath();
@@ -358,6 +420,28 @@ function paradeBg(c, t, dusk = duskAt(t), speed = 1) {
   // bunting posts along the far side of the road
   for (let i = 0; i < 5; i++) {
     const x = W + 300 - frac((camX * 0.9 + i * 520) / 2600) * 2600;
+    if (DETAIL.on) {
+      // a string of little flags sags from post to post
+      const sag = 62 + 6 * Math.sin(t * 2 + i);
+      c.strokeStyle = INK;
+      c.lineWidth = 3.5;
+      c.beginPath();
+      c.moveTo(x, ROAD - 322);
+      c.quadraticCurveTo(x + 260, ROAD - 322 + sag * 2, x + 520, ROAD - 322);
+      c.stroke();
+      for (let j = 1; j < 8; j++) {
+        const u = j / 8, fx = x + 520 * u, fy = ROAD - 322 + sag * 4 * u * (1 - u);
+        const sw = Math.sin(t * 5 + i + j) * 5;
+        c.beginPath();
+        c.moveTo(fx - 17, fy);
+        c.lineTo(fx + 17, fy);
+        c.lineTo(fx + sw, fy + 38);
+        c.closePath();
+        fillStroke(c, FW[(i + j) % 5], INK, 3.5);
+      }
+      // the post itself: painted stripes, a ball on top, its shadow on the road
+      pool(c, x + 30, ROAD - 80, 60, 9, '90,50,40', 0.3);
+    }
     c.strokeStyle = INK;
     c.lineWidth = 6;
     c.lineCap = 'round';
@@ -365,6 +449,20 @@ function paradeBg(c, t, dusk = duskAt(t), speed = 1) {
     c.moveTo(x, ROAD - 86);
     c.lineTo(x, ROAD - 330);
     c.stroke();
+    if (DETAIL.on) {
+      c.lineWidth = 14;
+      c.stroke();
+      c.strokeStyle = '#ffffff';
+      c.lineWidth = 8;
+      c.stroke();
+      c.strokeStyle = '#ff5d8f';
+      c.setLineDash([22, 26]);
+      c.stroke();
+      c.setLineDash([]);
+      c.beginPath();
+      c.arc(x, ROAD - 338, 11, 0, TAU);
+      fillStroke(c, '#ffd84d', INK, 4);
+    }
     c.save();
     c.translate(x, ROAD - 330);
     c.beginPath();
@@ -586,6 +684,16 @@ function nightSky(c, t, lt, n = 10, k = 0) {
   sky(c, '#140d33', '#4a2b7a');
   c.save();
   about(c, W / 2, 500, 1 + 0.05 * k);
+  if (DETAIL.on) {
+    // faint clouds of colour in the night, and a few bright stars
+    pool(c, 420, 260, 620, 330, '120,80,230', 0.26);
+    pool(c, 1480, 380, 660, 300, '230,90,170', 0.16);
+    pool(c, 960, 760, 1100, 260, '255,170,120', 0.16);
+    for (let i = 0; i < 8; i++) {
+      const tw = 0.55 + 0.45 * Math.sin(t * (1.4 + rand(i) * 2) + i * 2.1);
+      glint(c, 90 + rand(i * 3.1 + 4) * 1740, 50 + rand(i * 6.7 + 2) * 520, (8 + rand(i * 9) * 12) * tw, 0.85 * tw, '#fff6d8');
+    }
+  }
   twinkleStars(c, t, 160, H * 0.75, 1);
   for (let i = 0; i < n; i++) {
     const period = 2.3;

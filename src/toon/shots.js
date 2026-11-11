@@ -6,6 +6,7 @@ import { SCENES } from '../scenes.js';
 import { easeIn, easeOut, clamp } from '../util.js';
 import { cam, applyCam, fitCam, handheld } from './camera.js';
 import { ACTS } from './scenes/index.js';
+import { setActorClock } from './actor.js';
 
 const SHOTS = [];
 for (const act of ACTS) for (const sh of act.shots) SHOTS.push(sh);
@@ -14,6 +15,24 @@ for (const [start, name] of SECTIONS) {
   if (!ACTS.some((a) => start >= a.from - 1e-6 && start < a.to - 1e-6)) SHOTS.push({ t: start, legacy: name });
 }
 SHOTS.sort((a, b) => a.t - b.t);
+// light by passage, for shots that do not set their own: dark scenes bloom more and close in at the corners
+const LOOKS = [
+  [0, 11.4, { glow: 0.4, vig: 0.7 }], // the castle at night
+  [77.84, 92.04, { glow: 0.4, vig: 0.75, rim: 1.2 }], // storm
+  [105.6, 109.45, { glow: 0.42, vig: 0.7 }], // the zoo at night
+  [109.45, 113.6, { glow: 0.5, vig: 0.6 }], // space
+  [126.14, 138.84, { glow: 0.36, vig: 0.7 }], // bedtime
+  [142.64, 156.94, { glow: 0.36 }], // disco
+  [156.94, 172.24, { glow: 0.4, vig: 0.75, rim: 1.2 }], // storm
+  [172.24, 188.84, { glow: 0.32, rim: 1.15 }], // sunset
+  [206.9, DURATION, { glow: 0.5, vig: 0.65 }], // fireworks
+];
+for (const sh of SHOTS) {
+  for (const [a, b, look] of LOOKS) {
+    if (sh.t < a - 1e-6 || sh.t >= b - 1e-6) continue;
+    for (const k in look) sh[k] ??= look[k];
+  }
+}
 export { SHOTS };
 
 const TR = {
@@ -56,6 +75,7 @@ export function renderShot(t, stage) {
   const d = Math.floor(lt * 12 + 1e-6);
   const s = { t, lt, dur: end - sh.t, k: lt / (end - sh.t), ltc: d / 12, tc: sh.t + d / 12, d, end, left: end - t, i };
 
+  setActorClock(s);
   if (sh.legacy) {
     SCENES[sh.legacy](stage.cel, s.tc, sectionAt(s.tc));
     return { drawing: i * 97 + d, cam: cam() };
@@ -95,6 +115,7 @@ export function renderShot(t, stage) {
 
   return {
     cam: c, drawing: i * 97 + d, shift, blur, impact, shotT: sh.t, keepWords: sh.keepWords, wordAt: sh.wordAt, wash: sh.wash ?? 1, boil: sh.boil, tint: sh.tint ? sh.tint(s) : null,
+    rim: sh.rim, depth: sh.depth, glow: typeof sh.glow === 'function' ? sh.glow(s) : sh.glow, vig: sh.vig, finish: sh.finish,
     over(ctx) {
       sh.over?.(ctx, s);
       if (tin.type === 'flash' && lt < 0.25) flash(ctx, 1 - lt / 0.25);

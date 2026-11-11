@@ -1,6 +1,7 @@
 // Chorus (1:03 and the final one at 2:22): a cut per line.
 import { sunburst, focusLines, speedLines, hearts, confetti, sparkles } from '../../fx.js';
-import { blob, fillStroke } from '../../util.js';
+import { blob, fillStroke, DETAIL } from '../../util.js';
+import { glint } from '../paint.js';
 import { bigLabel, COMIC } from '../../text.js';
 import * as P from '../../props.js';
 import { brie, jump } from '../actor.js';
@@ -32,13 +33,68 @@ function disco(c, t) {
       c.lineTo(ox + Math.sin(a) * 900 + 200, H + 50);
       c.closePath();
       c.fill();
+      if (DETAIL.on) {
+        // each beam lands in a pool of colour on the floor
+        c.fillStyle = c.fillStyle.replace('0.2)', '0.3)');
+        c.beginPath();
+        c.ellipse(ox + Math.sin(a) * 790, 930, 230, 52, 0, 0, TAU);
+        c.fill();
+      }
+    }
+    if (DETAIL.on) {
+      // flecks thrown round the room by the mirror ball
+      for (let i = 0; i < 34; i++) {
+        const th = t * 0.5 + i * 0.83, row = (i * 7) % 11;
+        const x = W / 2 + Math.cos(th) * (360 + ((i * 53) % 640)), y = 150 + row * 78 + Math.sin(th * 1.3) * 14;
+        c.fillStyle = `rgba(255,255,255,${0.1 + 0.16 * (0.5 + 0.5 * Math.sin(th * 3))})`;
+        c.beginPath();
+        c.ellipse(x, y, 17, 10, Math.cos(th) * 0.5, 0, TAU);
+        c.fill();
+      }
     }
     c.globalCompositeOperation = 'source-over';
     c.save();
     c.translate(W / 2, 80);
+    if (DETAIL.on) {
+      c.strokeStyle = INK;
+      c.lineWidth = 5;
+      c.beginPath();
+      c.moveTo(0, -200);
+      c.lineTo(0, -58);
+      c.stroke();
+    }
     c.beginPath();
     c.arc(0, 0, 60, 0, TAU);
     fillStroke(c, '#d7dbea', INK, 6);
+    if (DETAIL.on) {
+      // mirror tiles in rings, a dark side, a bright cap
+      c.save();
+      c.clip();
+      c.strokeStyle = 'rgba(110,120,160,0.7)';
+      c.lineWidth = 2.5;
+      for (let r = -2; r <= 2; r++) {
+        c.beginPath();
+        c.ellipse(0, r * 22, 60, 9, 0, 0, Math.PI);
+        c.stroke();
+      }
+      for (let m = 0; m < 6; m++) {
+        const ph = ((t * 0.9 + m / 6) % 1) * Math.PI;
+        c.beginPath();
+        c.ellipse(0, 0, Math.abs(Math.cos(ph)) * 60, 60, 0, Math.cos(ph) > 0 ? -Math.PI / 2 : Math.PI / 2, Math.cos(ph) > 0 ? Math.PI / 2 : Math.PI * 1.5);
+        c.stroke();
+      }
+      const g = c.createRadialGradient(-20, -24, 6, 0, 0, 70);
+      g.addColorStop(0, 'rgba(255,255,255,0.6)');
+      g.addColorStop(0.45, 'rgba(255,255,255,0)');
+      g.addColorStop(1, 'rgba(70,60,140,0.55)');
+      c.fillStyle = g;
+      c.fillRect(-62, -62, 124, 124);
+      c.restore();
+      for (let i = 0; i < 5; i++) {
+        const tw = Math.max(0, Math.sin(t * 5 + i * 1.9));
+        glint(c, Math.cos(i * 2.2 + 0.4) * 46, Math.sin(i * 1.7 - 0.6) * 44, 26 * tw, tw);
+      }
+    }
     c.fillStyle = '#ffffff';
     for (let i = 0; i < 12; i++) {
       const a = t * 2 + i;

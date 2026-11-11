@@ -1,6 +1,7 @@
 // Opening act: intro (0:00), entrance (0:11), title (0:16), arrive (0:27).
 import { sky, sunburst, focusLines, halftone, twinkleStars, sparkles, speedLines, vignette, flash, shadow } from '../../fx.js';
-import { blob, fillStroke, clover, noise } from '../../util.js';
+import { blob, fillStroke, clover, noise, heart } from '../../util.js';
+import { glint } from '../paint.js';
 import { pulse, beatAt } from '../../timeline.js';
 import { logo, bigLabel } from '../../text.js';
 import * as P from '../../props.js';
@@ -181,45 +182,106 @@ const gateShot = {
 };
 
 /* ---------------- entrance: six smash cuts, one per shout ---------------- */
+// "PIM!" — a fluffy paw pops up and waves hello, toe beans to the camera
 const pawShot = {
-  t: 11.4, tr: 'flash', punch: 2, wordAt: () => [0.22, 0.26, -0.1, 1.5],
-  cam: (s) => {
-    const sh = shake(s.lt - 0.14, 44, s.d);
-    return cam(W / 2 + sh[0], H / 2 + sh[1], 1);
-  },
-  bg(c, s) {
-    burstBg('#ff7da5', '#ffd1e3')(c, s);
-    c.fillStyle = '#ff5d8f';
-    c.fillRect(-100, 860, W + 200, 400);
-    c.fillStyle = INK;
-    c.fillRect(-100, 852, W + 200, 12);
-  },
+  t: 11.4, tr: 'flash', punch: 1, wordAt: () => [0.22, 0.26, -0.1, 1.5],
+  cam: (s) => cam(W / 2, H / 2, lerp(1.05, 1, easeOut(clamp(s.lt / 0.4)))),
+  bg: burstBg('#ff7da5', '#ffd1e3'),
   cel(c, s) {
-    const a = s.ltc - 0.14;
-    const y = s.lt < 0.14 ? lerp(-260, 860, easeIn(s.lt / 0.14)) : 860;
-    const sq = s.lt < 0.14 ? -0.3 : 0.42 * Math.exp(-Math.max(a, 0) * 8) * Math.cos(Math.max(a, 0) * 20);
-    if (a >= 0) pow(c, W / 2, 850, 560, a, '#ffd84d', 12, 3, Infinity);
-    shadow(c, W / 2, 866, 330, 0.25);
+    const up = key(s.lt, [[0, 0], [0.2, 1.05, 'out'], [0.32, 1, 'io']]);
+    const a = Math.max(s.ltc - 0.2, 0);
+    const wave = Math.sin(a * 10.5) * 0.17 * (0.45 + 0.55 * Math.exp(-a * 1.2));
+    const sq = up < 1 ? 0 : 0.05 * Math.exp(-a * 9) * Math.cos(a * 16);
     c.save();
-    c.translate(W / 2, y);
-    c.scale(1 + sq * 0.8, 1 - sq);
-    blob(c, [[0, -620, 150, 560, 0], [30, -110, 250, 130, 0], [-150, -90, 90, 80, 0], [200, -90, 100, 84, 0]], '#fdfbff', 16);
-    c.strokeStyle = '#d9cfe8';
-    c.lineWidth = 12;
+    c.translate(1090, 690 + (1 - up) * 980);
+    // she waves from the wrist
+    c.translate(0, 330);
+    c.rotate(wave);
+    c.translate(0, -330);
+    c.scale(1.22 * (1 + sq), 1.22 * (1 - sq));
     c.lineCap = 'round';
-    for (const x of [-90, 30, 150]) {
+    // the fluffy foreleg, then the paw with its four toes
+    const fur = [[0, 470, 150, 520, 0]];
+    for (let i = 0; i < 5; i++) fur.push([-146, 150 + i * 120, 36 + (i % 2) * 8], [146, 210 + i * 120, 34 + (i % 3) * 6]);
+    fur.push([0, -60, 232, 212, 0], [-176, -180, 84], [-64, -258, 92], [64, -258, 92], [176, -180, 84], [-214, 40, 44], [214, 30, 42], [-150, 128, 46], [150, 132, 44]);
+    blob(c, fur, '#fdfbff', 14);
+    // soft shade on the far side and curls in the fur
+    c.strokeStyle = 'rgba(214,202,236,0.7)';
+    c.lineWidth = 38;
+    c.beginPath();
+    c.moveTo(108, 900);
+    c.lineTo(108, 190);
+    c.quadraticCurveTo(200, 120, 196, -40);
+    c.stroke();
+    c.strokeStyle = '#cbbfe2';
+    c.lineWidth = 8;
+    for (let i = 0; i < 6; i++) {
       c.beginPath();
-      c.moveTo(x, -60);
-      c.lineTo(x + 8, -6);
+      c.arc(-70 + (i % 3) * 66 + (i % 2) * 12, 250 + i * 86, 24, 0.9 * Math.PI, 1.9 * Math.PI);
       c.stroke();
     }
+    for (const x of [-120, 0, 120]) {
+      c.beginPath();
+      c.moveTo(x * 0.98, -262 + Math.abs(x) * 0.5);
+      c.lineTo(x * 0.9, -212 + Math.abs(x) * 0.5);
+      c.stroke();
+    }
+    // pink pads: four toe beans and the big one
+    const bean = (x, y, rx, ry, r) => {
+      c.beginPath();
+      c.ellipse(x, y, rx, ry, r, 0, TAU);
+      fillStroke(c, '#ff9ec4', '#c2557f', 6);
+      c.fillStyle = 'rgba(255,255,255,0.7)';
+      c.beginPath();
+      c.ellipse(x - rx * 0.3, y - ry * 0.38, rx * 0.3, ry * 0.2, r - 0.5, 0, TAU);
+      c.fill();
+    };
+    bean(-166, -168, 42, 54, -0.45);
+    bean(-60, -244, 46, 60, -0.14);
+    bean(60, -244, 46, 60, 0.14);
+    bean(166, -168, 42, 54, 0.45);
+    c.beginPath();
+    c.moveTo(0, -112);
+    c.bezierCurveTo(70, -128, 150, -60, 138, 14);
+    c.bezierCurveTo(128, 74, 60, 78, 0, 56);
+    c.bezierCurveTo(-60, 78, -128, 74, -138, 14);
+    c.bezierCurveTo(-150, -60, -70, -128, 0, -112);
+    c.closePath();
+    fillStroke(c, '#ff9ec4', '#c2557f', 7);
+    c.fillStyle = 'rgba(255,255,255,0.65)';
+    c.beginPath();
+    c.ellipse(-58, -58, 40, 20, -0.5, 0, TAU);
+    c.fill();
     c.restore();
   },
   fx(c, s) {
-    const a = s.ltc - 0.14;
-    ring(c, W / 2, 860, a, 1100, '#ffffff');
-    puff(c, W / 2 - 330, 850, a, 1.5, 4);
-    puff(c, W / 2 + 360, 850, a, 1.5, 5);
+    const a = s.ltc - 0.2;
+    if (a < 0) return;
+    // wave arcs beside the paw, sparkles, and a little heart drifting up
+    c.save();
+    c.lineCap = 'round';
+    c.strokeStyle = '#ffffff';
+    c.lineWidth = 13;
+    c.globalAlpha = clamp(1.6 - a * 1.4);
+    for (const sx of [-1, 1]) for (let i = 0; i < 2; i++) {
+      const r = 380 + i * 52 + (s.d % 2) * 12;
+      c.beginPath();
+      c.arc(1090, 690, r, -Math.PI / 2 + sx * 0.72, -Math.PI / 2 + sx * (1.0 - i * 0.06), sx < 0);
+      c.stroke();
+    }
+    c.restore();
+    sparkles(c, s.tc, 1090, 480, 560, 12, 7, '#ffffff');
+    for (const [hx, hy, hs, d] of [[1490, 400, 46, 0], [700, 330, 34, 0.12]]) {
+      const v = clamp((a - d) / 0.7);
+      if (v <= 0) continue;
+      c.save();
+      c.globalAlpha = Math.min(1, v * 5) * (1 - Math.max(v - 0.75, 0) * 4);
+      c.translate(hx + Math.sin(a * 5 + hx) * 14, hy - easeOut(v) * 110);
+      c.rotate(Math.sin(a * 4 + hx) * 0.2);
+      heart(c, 0, 0, hs * (0.6 + 0.4 * easeOutBack(Math.min(1, v * 3))));
+      fillStroke(c, '#ff5d8f', INK, 6);
+      c.restore();
+    }
   },
 };
 

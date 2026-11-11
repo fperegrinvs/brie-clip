@@ -42,7 +42,7 @@ const TOP2 = [[0.25, 0.17, -0.1], [0.75, 0.2, 0.08]];
 const S = (t, e, text) => ({ kind: 'sing', t, e, text });
 
 export const LYRICS = [
-  { kind: 'narr', t: 1.1, e: 11.2, text: 'From the Kingdom of Cloverleaf hails Brie!' },
+  { kind: 'narr', t: 1.1, e: 11.2, text: 'From the Kingdom of Cloverleaf hails Brie!', cues: [1.68, 2.16, 2.24, 3.02, 3.4, 4.5, 5.56, 6.1] },
   B([[11.54, 'PIM!'], [12.42, 'PIM!'], [13.32, 'PIM PINHA!'], [14.0, 'BRIE!'], [14.64, 'BRIE!'], [15.28, 'BRIEZINHA!']], 16.3, undefined, SIDES6),
 
   S(37.32, 40.8, 'Brie, Briezinha, furacão de algodão'),

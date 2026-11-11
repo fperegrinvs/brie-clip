@@ -2,7 +2,7 @@
 // separate characters. costume(kind, t) returns hook options for
 // drawBreeSide / drawBreeFront: { under, overBody, overHead, noTail }.
 // Hook coordinates are Brie-local: side head centre (98,-150), front head (0,-196).
-import { TAU, INK, blob, fillStroke, lerp } from './util.js';
+import { TAU, INK, blob, dblob, fillStroke, lerp } from './util.js';
 import { paoDeQueijo, rocketPack } from './props.js';
 
 const GREEN = '#43b75c', GREEN_D = '#2f8f45';
@@ -137,7 +137,7 @@ function cheeseCap(ctx, x, y, r) {
     const a = Math.PI + (i / 6) * Math.PI;
     puff.push([x + Math.cos(a) * r * 0.85, y + Math.sin(a) * r * 0.45, r * 0.3]);
   }
-  blob(ctx, puff, '#f7c45a', 6);
+  dblob(ctx, puff, '#f7c45a', 6);
   ctx.fillStyle = '#e09a2e';
   for (let i = 0; i < 5; i++) {
     ctx.beginPath();
@@ -204,7 +204,7 @@ function veins(ctx, g, n) {
 function cabbageHood(ctx, g, t, stem) {
   // ruffled outer leaf layer, then the smooth inner leaf
   const ruff = hoodRim(g, 13, g.R - 4, 0.02).map(([x, y], i) => [x, y, 24 + 4 * Math.sin(i * 2.1 + t * 5)]);
-  blob(ctx, ruff, CV, 6);
+  dblob(ctx, ruff, CV, 6);
   hoodPath(ctx, g);
   ctx.fillStyle = CV_L;
   ctx.fill();
@@ -228,7 +228,7 @@ function leafTunic(ctx, cx, cy, rx, ry, view) {
     const a = lerp(0.25, Math.PI - 0.25, i / (n - 1));
     parts.push([cx + Math.cos(a) * rx * 0.86, cy + Math.sin(a) * ry * 0.8, ry * 0.32]);
   }
-  blob(ctx, parts, CV, 6);
+  dblob(ctx, parts, CV, 6);
   // two big overlapping leaves with midribs
   ctx.strokeStyle = CV_V;
   ctx.lineCap = 'round';
@@ -269,7 +269,7 @@ function lionEar(ctx, x, y, r) {
 function lionHood(ctx, g, t, ears) {
   const w = Math.sin(t * 6) * 3;
   const tufts = hoodRim(g, 14, g.R - 6, -0.05).map(([x, y, a], i) => [x + Math.cos(a) * w * 0.3, y + Math.sin(a) * w * 0.3, 26 + 4 * (i % 2)]);
-  blob(ctx, tufts, MANE, 6);
+  dblob(ctx, tufts, MANE, 6);
   for (const [x, y, r] of ears) lionEar(ctx, x, y, r);
   hoodPath(ctx, g);
   ctx.fillStyle = MANE;
@@ -299,7 +299,7 @@ function lionChest(ctx, view) {
   const tufts = view === 'side'
     ? [[120, -86, 26], [96, -74, 28], [70, -70, 24], [138, -106, 22]]
     : [[0, -110, 34], [-34, -104, 28], [34, -104, 28], [-62, -116, 22], [62, -116, 22]];
-  blob(ctx, tufts, MANE_L, 6);
+  dblob(ctx, tufts, MANE_L, 6);
 }
 function lionTail(ctx, x, y, t, s = 1) {
   ctx.save();
@@ -317,7 +317,7 @@ function lionTail(ctx, x, y, t, s = 1) {
   ctx.strokeStyle = GOLD;
   ctx.stroke();
   const tx = -86 + sw * 0.4, ty = -64;
-  blob(ctx, [[tx, ty - 6, 22], [tx - 13, ty - 20, 16], [tx + 11, ty - 22, 16], [tx, ty - 32, 14]], MANE, 5);
+  dblob(ctx, [[tx, ty - 6, 22], [tx - 13, ty - 20, 16], [tx + 11, ty - 22, 16], [tx, ty - 32, 14]], MANE, 5);
   ctx.restore();
 }
 
@@ -333,7 +333,7 @@ function crease(ctx, x, y, r, ang) {
   ctx.stroke();
 }
 function wormTube(ctx, segs) {
-  blob(ctx, segs, WP, 6);
+  dblob(ctx, segs, WP, 6);
   ctx.save();
   ctx.beginPath();
   for (const [x, y, r] of segs) {
@@ -363,7 +363,7 @@ function wormBodySide(ctx, t) {
 }
 function wormBodyFront(ctx, t) {
   const segs = [[0, -48, 84, 50, 0], [0, -92, 92, 54, 0], [0, -136, 84, 50, 0]].map(([x, y, rx, ry], i) => [x + Math.sin(t * 12 - i) * 4, y, rx, ry, 0]);
-  blob(ctx, segs, WP, 6);
+  dblob(ctx, segs, WP, 6);
   ctx.strokeStyle = WP_D;
   ctx.lineWidth = 4;
   ctx.lineCap = 'round';
@@ -464,7 +464,7 @@ export function costume(kind, t = 0) {
 }
 
 // strap a rocket booster onto Brie's back (side view)
-export function withRocket(c, t) {
+export function withRocket(c, t, power = 1) {
   const ob = c.overBody;
   return {
     ...c,
@@ -475,7 +475,7 @@ export function withRocket(c, t) {
       ctx.save();
       ctx.translate(70, -160);
       ctx.scale(1.05, 1.05);
-      rocketPack(ctx, t);
+      rocketPack(ctx, t, power);
       ctx.restore();
       ctx.beginPath();
       ctx.roundRect(-58, -150, 22, 116, 8);

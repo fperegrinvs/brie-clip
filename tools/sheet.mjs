@@ -9,7 +9,7 @@ const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
 const errs = [];
 page.on('pageerror', (e) => errs.push(e.message));
 page.on('console', (m) => m.type() === 'error' && errs.push(m.text()));
-await page.goto(`http://localhost:5178/${PAGE}?render`);
+await page.goto(`http://localhost:5178/${PAGE}${PAGE.includes('?') ? '&' : '?'}render`);
 await page.waitForFunction(() => window.ready === true);
 const data = await page.evaluate(([times, cols]) => {
   const cw = Math.round(2560 / cols), ch = Math.round(cw * 9 / 16);

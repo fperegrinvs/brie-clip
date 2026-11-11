@@ -35,6 +35,62 @@ export function noise(t, seed = 0) {
 
 export const INK = '#3a2747';
 
+/* The cartoon cut's richer drawing style. Off by default, so the original clip and the game
+ * draw exactly as they always have; src/toon/main.js switches it on. */
+export const DETAIL = { on: false };
+export function setDetail(v) { DETAIL.on = !!v; }
+
+// how many screen pixels one drawing unit covers: fine detail is skipped on small drawings
+export function drawScale(ctx) {
+  const m = ctx.getTransform();
+  return Math.sqrt(Math.abs(m.a * m.d - m.b * m.c));
+}
+
+// unit vector, in the current drawing space, pointing away from the light (which sits top-left on screen)
+export function lightDir(ctx) {
+  const m = ctx.getTransform();
+  const det = m.a * m.d - m.b * m.c || 1;
+  const x = (m.d * 0.58 - m.c * 0.81) / det, y = (-m.b * 0.58 + m.a * 0.81) / det;
+  const l = Math.hypot(x, y) || 1;
+  return [x / l, y / l];
+}
+
+function subPath(ctx, s, ox, oy) {
+  if (s.length === 3) {
+    ctx.moveTo(s[0] + ox + s[2], s[1] + oy);
+    ctx.arc(s[0] + ox, s[1] + oy, s[2], 0, TAU);
+  } else {
+    const r = s[4] || 0;
+    ctx.moveTo(s[0] + ox + s[2] * Math.cos(r), s[1] + oy + s[2] * Math.sin(r));
+    ctx.ellipse(s[0] + ox, s[1] + oy, s[2], s[3], r, 0, TAU);
+  }
+}
+
+/**
+ * Two-tone form shadow for a blob just drawn with `fill`: the part of the blob that the same
+ * blob, slid `d` toward the light, does not cover is left in `shade`.
+ */
+export function shadeBlob(ctx, shapes, fill, shade, d = 10) {
+  const [lx, ly] = lightDir(ctx);
+  let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
+  for (const s of shapes) {
+    const r = s.length === 3 ? s[2] : Math.max(s[2], s[3]);
+    x0 = Math.min(x0, s[0] - r); y0 = Math.min(y0, s[1] - r);
+    x1 = Math.max(x1, s[0] + r); y1 = Math.max(y1, s[1] + r);
+  }
+  ctx.save();
+  ctx.beginPath();
+  for (const s of shapes) subPath(ctx, s, 0, 0);
+  ctx.clip();
+  ctx.fillStyle = shade;
+  ctx.fillRect(x0 - 2, y0 - 2, x1 - x0 + 4, y1 - y0 + 4);
+  ctx.fillStyle = fill;
+  ctx.beginPath();
+  for (const s of shapes) subPath(ctx, s, -lx * d, -ly * d);
+  ctx.fill();
+  ctx.restore();
+}
+
 /**
  * Draw a union of circles/ellipses as one blob with a single outline.
  * shapes: [x, y, r] or [x, y, rx, ry, rot]
@@ -47,10 +103,18 @@ export function blob(ctx, shapes, fill, lw = 6, stroke = INK) {
   };
   if (lw > 0) {
     ctx.fillStyle = stroke;
+    // detail mode: a thick-and-thin line, heavier on the side away from the light
+    let ox = 0, oy = 0, grow = lw / 2;
+    if (DETAIL.on) {
+      const [lx, ly] = lightDir(ctx);
+      ox = lx * lw * 0.13;
+      oy = ly * lw * 0.13;
+      grow = lw * 0.52;
+    }
     for (const s of shapes) {
       ctx.beginPath();
-      if (s.length === 3) ctx.arc(s[0], s[1], s[2] + lw / 2, 0, TAU);
-      else ctx.ellipse(s[0], s[1], s[2] + lw / 2, s[3] + lw / 2, s[4] || 0, 0, TAU);
+      if (s.length === 3) ctx.arc(s[0] + ox, s[1] + oy, s[2] + grow, 0, TAU);
+      else ctx.ellipse(s[0] + ox, s[1] + oy, s[2] + grow, s[3] + grow, s[4] || 0, 0, TAU);
       ctx.fill();
     }
   }
@@ -120,4 +184,25 @@ export function heart(ctx, x, y, s) {
   ctx.bezierCurveTo(x - s, y - s * 0.3, x - s * 0.4, y - s, x, y - s * 0.45);
   ctx.bezierCurveTo(x + s * 0.4, y - s, x + s, y - s * 0.3, x, y + s * 0.35);
   ctx.closePath();
+}
+
+// mix two #rrggbb colours
+export function mixHex(a, b, k) {
+  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+  let out = '#';
+  for (const sh of [16, 8, 0]) {
+    const v = Math.round(lerp((pa >> sh) & 255, (pb >> sh) & 255, k));
+    out += v.toString(16).padStart(2, '0');
+  }
+  return out;
+}
+const SHADES = {};
+// the shadow tone of a flat colour: pulled toward a cool violet
+export function shadeOf(c, k = 0.24) {
+  return SHADES[c + k] || (SHADES[c + k] = c[0] === '#' && c.length === 7 ? mixHex(c, '#5b3f8a', k) : c);
+}
+// blob() that, in detail mode, also gets its form shadow
+export function dblob(ctx, shapes, fill, lw = 6, d = 9, k = 0.24) {
+  blob(ctx, shapes, fill, lw);
+  if (DETAIL.on) shadeBlob(ctx, shapes, fill, shadeOf(fill, k), d);
 }

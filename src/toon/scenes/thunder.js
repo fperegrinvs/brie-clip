@@ -1,6 +1,7 @@
 // Thunder (1:18 and the final one at 2:37): costume chants on crash zooms, hero shots on the sung lines.
 import { speedLines, focusLines, lightning, sparkles } from '../../fx.js';
-import { blob } from '../../util.js';
+import { blob, DETAIL, shadeBlob } from '../../util.js';
+import { vgrad } from '../paint.js';
 import { bigLabel } from '../../text.js';
 import * as P from '../../props.js';
 import { brie, zip } from '../actor.js';
@@ -22,15 +23,65 @@ function storm(c, t, o = {}) {
   c.fillStyle = g;
   c.fillRect(-500, -500, W + 1000, H + 1000);
   const n = o.n ?? 9, sp = o.speed ?? 40, vy = o.vy ?? 0;
+  if (DETAIL.on) {
+    // a far bank of cloud, slower and paler, with no line; sheets of rain hanging under it
+    for (let i = 0; i < 8; i++) {
+      const x = frac((i * 330 + 120 - t * sp * 0.4) / (W + 900)) * (W + 900) - 450;
+      const y = vy ? frac((i * 0.29 + 0.13 + t * vy * 0.5) % 1) * (H + 600) - 300 : 250 + (i % 4) * 46 + (o.dy ?? 0);
+      const k = 1.3 + (i % 3) * 0.3;
+      c.fillStyle = i % 2 ? 'rgba(74,54,128,0.55)' : 'rgba(92,66,150,0.5)';
+      c.beginPath();
+      for (const [dx, dy, r] of [[0, 0, 110], [120, 26, 84], [-120, 34, 78], [50, -40, 70]]) {
+        c.moveTo(x + dx * k + r * k, y + dy);
+        c.arc(x + dx * k, y + dy, r * k, 0, TAU);
+      }
+      c.fill();
+    }
+    if (!vy) vgrad(c, -500, 300 + (o.dy ?? 0), W + 1000, 520, 'rgba(120,100,200,0.22)', 'rgba(120,100,200,0)');
+  }
   for (let i = 0; i < n; i++) {
     const x = frac((i * 260 - t * sp) / (W + 800)) * (W + 800) - 400;
     const y = vy ? frac((i * 0.37 + t * vy) % 1) * (H + 500) - 250 : 110 + (i % 3) * 40 + (o.dy ?? 0);
     const k = 1 + (i % 3) * 0.25;
-    blob(c, [[x, y, 120 * k], [x + 110 * k, y + 30, 90 * k], [x - 110 * k, y + 40, 80 * k]], i % 2 ? '#3d2b6b' : '#4a357c', 5, '#140b2e');
+    const shapes = [[x, y, 120 * k], [x + 110 * k, y + 30, 90 * k], [x - 110 * k, y + 40, 80 * k]];
+    blob(c, shapes, i % 2 ? '#3d2b6b' : '#4a357c', 5, '#140b2e');
+    if (DETAIL.on) {
+      // heavy bellies, a pale edge where the light catches the top, a few curls
+      shadeBlob(c, shapes, i % 2 ? '#3d2b6b' : '#4a357c', i % 2 ? '#2b1d52' : '#352561', 26 * k);
+      c.strokeStyle = 'rgba(190,170,245,0.5)';
+      c.lineWidth = 5;
+      c.lineCap = 'round';
+      for (const [sx, sy, r] of shapes) {
+        c.beginPath();
+        c.arc(sx, sy, r - 12, Math.PI * 1.12, Math.PI * 1.5);
+        c.stroke();
+      }
+      c.strokeStyle = 'rgba(20,11,46,0.5)';
+      c.lineWidth = 4;
+      c.beginPath();
+      c.arc(x + 30 * k, y + 20, 44 * k, Math.PI * 0.1, Math.PI * 0.75);
+      c.stroke();
+      c.beginPath();
+      c.arc(x - 70 * k, y + 50, 30 * k, Math.PI * 0.15, Math.PI * 0.8);
+      c.stroke();
+    }
   }
 }
 function rain(c, t, a = 0.4) {
   screen(c, () => {
+    if (DETAIL.on) {
+      // a far curtain of finer rain behind the near drops
+      c.strokeStyle = `rgba(190,200,255,${a * 0.45})`;
+      c.lineWidth = 2;
+      for (let i = 0; i < 150; i++) {
+        const x = (rand(i + 300) * W + t * 120) % W;
+        const y = (rand(i + 450) * H + t * 1100) % H;
+        c.beginPath();
+        c.moveTo(x, y);
+        c.lineTo(x - 8, y + 28);
+        c.stroke();
+      }
+    }
     c.strokeStyle = `rgba(200,210,255,${a})`;
     c.lineWidth = 4;
     for (let i = 0; i < 110; i++) {

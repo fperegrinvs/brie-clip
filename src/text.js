@@ -165,7 +165,20 @@ export function softText(ctx, line, t) {
 }
 
 /* Narrator parchment scroll ------------------------------------------ */
-export function narration(ctx, line, t) {
+// how many characters of `text` are written at time t when each word starts on its spoken cue
+function cuedChars(text, cues, t) {
+  const words = text.split(' ');
+  let n = 0;
+  for (let i = 0; i < words.length; i++) {
+    const a = cues[i], b = cues[i + 1] ?? a + 0.5, len = words[i].length;
+    if (t < a) break;
+    n += (i ? 1 : 0) + Math.max(1, Math.ceil(clamp((t - a) / Math.min((b - a) * 0.75, len * 0.07)) * len));
+  }
+  return n;
+}
+
+// `cues` (optional): a start time per word, so the letters are written as the narrator speaks them
+export function narration(ctx, line, t, cues) {
   const age = t - line.t;
   const a = clamp(age / 0.6) * clamp((line.e - t) / 0.5);
   if (a <= 0) return;
@@ -200,6 +213,22 @@ export function narration(ctx, line, t) {
   ctx.textAlign = 'center';
   ctx.fillStyle = '#5a3a1a';
   ctx.font = `500 62px ${SING}`;
+  if (cues) {
+    // every letter lands where it will stay, word by word with the voice
+    const n = cuedChars(full, cues, t), k2 = t - cues[p1.split(' ').length];
+    ctx.textAlign = 'left';
+    ctx.fillText(p1.slice(0, n), cx - ctx.measureText(p1).width / 2, cy - 8);
+    if (k2 >= 0) {
+      const pop = easeOutBack(k2 / 0.4), up = p2.toUpperCase();
+      ctx.translate(cx, cy + 62);
+      ctx.scale(0.8 + 0.2 * pop, 0.8 + 0.2 * pop);
+      ctx.font = `64px ${COMIC}`;
+      ctx.fillStyle = '#2f8f45';
+      ctx.fillText(up.slice(0, Math.max(0, n - p1.length - 1)), -ctx.measureText(up).width / 2, 0);
+    }
+    ctx.restore();
+    return;
+  }
   ctx.fillText(p1.slice(0, chars), cx, cy - 8);
   const c2 = Math.max(0, chars - p1.length);
   if (c2 > 0) {

@@ -1,6 +1,7 @@
 // Build (2:01), the telling-off (2:06), the silence (2:15) and the restart (2:19).
 import { sky, speedLines, focusLines, halftone, sparkles } from '../../fx.js';
-import { fillStroke, clover, blob } from '../../util.js';
+import { fillStroke, clover, blob, DETAIL, star } from '../../util.js';
+import { pool, vgrad, glint, sheen, grain } from '../paint.js';
 import { bigLabel, COMIC } from '../../text.js';
 import * as P from '../../props.js';
 import { brie, jump, skid, take } from '../actor.js';
@@ -170,6 +171,121 @@ function bedroomNight(c) {
   g.addColorStop(1, 'rgba(255,170,90,0)');
   c.fillStyle = g;
   c.fillRect(0, 0, W, H);
+  if (DETAIL.on) {
+    // a night window with the moon in it, a string of star lights, a picture, a floor and a rug
+    c.save();
+    c.beginPath();
+    c.roundRect(1180, 150, 330, 300, 16);
+    fillStroke(c, '#1b1f5c', INK, 7);
+    c.clip();
+    pool(c, 1420, 240, 150, 150, '255,244,190', 0.5);
+    c.beginPath();
+    c.arc(1420, 240, 44, 0, TAU);
+    c.fillStyle = '#fff6c8';
+    c.fill();
+    c.fillStyle = '#1b1f5c';
+    c.beginPath();
+    c.arc(1402, 228, 38, 0, TAU);
+    c.fill();
+    for (let i = 0; i < 9; i++) glint(c, 1200 + rand(i * 3.3) * 290, 170 + rand(i * 5.1) * 250, 5 + rand(i) * 6, 0.8);
+    c.fillStyle = '#2a2f78';
+    c.beginPath();
+    c.ellipse(1260, 470, 180, 60, 0, 0, TAU);
+    c.ellipse(1470, 474, 130, 44, 0, 0, TAU);
+    c.fill();
+    sheen(c, 1184, 154, 322, 292, 0.16);
+    c.restore();
+    c.strokeStyle = INK;
+    c.lineWidth = 6;
+    c.beginPath();
+    c.moveTo(1345, 150);
+    c.lineTo(1345, 450);
+    c.moveTo(1180, 300);
+    c.lineTo(1510, 300);
+    c.stroke();
+    c.beginPath();
+    c.roundRect(1160, 448, 370, 22, 6);
+    fillStroke(c, '#8d73c9', INK, 5);
+    for (const [cx, dir] of [[1180, 1], [1510, -1]]) {
+      c.beginPath();
+      c.moveTo(cx - dir * 34, 124);
+      c.lineTo(cx + dir * 46, 124);
+      c.quadraticCurveTo(cx + dir * 62, 320, cx - dir * 6, 468);
+      c.lineTo(cx - dir * 34, 468);
+      c.closePath();
+      fillStroke(c, '#b08be0', INK, 5);
+      c.strokeStyle = '#8f6bc4';
+      c.lineWidth = 3.5;
+      c.beginPath();
+      c.moveTo(cx + dir * 14, 132);
+      c.quadraticCurveTo(cx + dir * 26, 320, cx - dir * 14, 458);
+      c.stroke();
+    }
+    c.strokeStyle = INK;
+    c.lineWidth = 8;
+    c.lineCap = 'round';
+    c.beginPath();
+    c.moveTo(1126, 122);
+    c.lineTo(1564, 122);
+    c.stroke();
+    // moonlight on the floor
+    pool(c, 1220, 1000, 300, 60, '170,180,255', 0.28);
+    // star lights along the wall
+    c.strokeStyle = 'rgba(30,15,50,0.7)';
+    c.lineWidth = 3;
+    c.beginPath();
+    c.moveTo(-100, 96);
+    for (let i = 0; i < 5; i++) c.quadraticCurveTo(-100 + i * 260 + 130, 196, -100 + (i + 1) * 260, 96);
+    c.stroke();
+    for (let i = 0; i < 14; i++) {
+      const u = (i + 0.5) / 14 * 5, seg = Math.floor(u), f = u - seg;
+      const x = -100 + seg * 260 + f * 260, y = 96 + 200 * f * (1 - f);
+      pool(c, x, y + 14, 46, 46, '255,220,140', 0.3);
+      c.save();
+      c.translate(x, y + 14);
+      c.rotate(0.3 * Math.sin(i * 2.1));
+      star(c, 0, 0, 15, 7, 5);
+      fillStroke(c, ['#ffe58a', '#ffc1dc', '#bfe8ff'][i % 3], INK, 3);
+      c.restore();
+    }
+    // a picture of her favourite thing
+    c.beginPath();
+    c.roundRect(820, 250, 170, 140, 8);
+    fillStroke(c, '#ffd84d', INK, 6);
+    c.beginPath();
+    c.rect(838, 268, 134, 104);
+    fillStroke(c, '#4a3a86', INK, 3.5);
+    clover(c, 905, 320, 34, 0.2, '#5fd77a', 4);
+    // floorboards and a round rug
+    c.fillStyle = '#4a3577';
+    c.fillRect(-400, 940, W + 800, 600);
+    c.strokeStyle = INK;
+    c.lineWidth = 6;
+    c.beginPath();
+    c.moveTo(-400, 940);
+    c.lineTo(W + 400, 940);
+    c.stroke();
+    c.fillStyle = '#5b4590';
+    c.fillRect(-400, 910, W + 800, 28);
+    c.globalAlpha = 0.5;
+    grain(c, -300, 960, W + 600, 110, '#33235a', 4, 41, 3);
+    c.globalAlpha = 1;
+    c.beginPath();
+    c.ellipse(W / 2 + 120, 1010, 760, 60, 0, 0, TAU);
+    fillStroke(c, '#7d5cc0', INK, 5);
+    c.beginPath();
+    c.ellipse(W / 2 + 120, 1010, 690, 44, 0, 0, TAU);
+    c.strokeStyle = '#b79bea';
+    c.lineWidth = 5;
+    c.setLineDash([24, 18]);
+    c.stroke();
+    c.setLineDash([]);
+    // the warm glow again, over the new furniture
+    c.fillStyle = g;
+    c.globalAlpha = 0.35;
+    c.fillRect(0, 0, W, H);
+    c.globalAlpha = 1;
+  }
   P.bed(c, W / 2, 960, 1.4);
 }
 function heat(c, t, x0, y0, n = 3) {
@@ -288,6 +404,97 @@ function fist(c, x, y) {
   c.fill();
   c.restore();
 }
+// where a point of her side-view head (in head units) lands on screen, so cloth can meet her teeth
+function headPt(p, hx, hy) {
+  const a = p.headTilt ?? 0;
+  let bx = 98 + hx * Math.cos(a) - hy * Math.sin(a), by = -150 + hx * Math.sin(a) + hy * Math.cos(a);
+  if (p.phase != null) {
+    const ph = p.phase * TAU, amp = p.amp ?? 1, pit = 0.07 * amp * Math.sin(ph);
+    [bx, by] = [bx * Math.cos(pit) - by * Math.sin(pit), bx * Math.sin(pit) + by * Math.cos(pit) - 18 * amp * (0.5 + 0.5 * Math.sin(ph - Math.PI / 2))];
+  }
+  const sq = p.sq ?? 0;
+  return [p.x + p.dir * p.s * (1 + sq * 0.75) * (bx - (p.lean ?? 0) * by), p.y + p.s * (1 - sq) * by];
+}
+// the duvet as a ribbon with its own width at every point, so it can gather into a bitten corner
+function quilt(c, pts, th) {
+  const n = pts.length;
+  const line = (k) => {
+    c.beginPath();
+    pts.forEach(([x, y], i) => (i ? c.lineTo(x, y + th[i] * k) : c.moveTo(x, y + th[i] * k)));
+  };
+  const band = (k0, k1, fill) => {
+    line(k0);
+    for (let i = n - 1; i >= 0; i--) c.lineTo(pts[i][0], pts[i][1] + th[i] * k1);
+    c.closePath();
+    c.fillStyle = fill;
+    c.fill();
+  };
+  c.save();
+  c.lineJoin = 'round';
+  c.lineCap = 'round';
+  line(-0.5);
+  for (let i = n - 1; i >= 0; i--) c.lineTo(pts[i][0], pts[i][1] + th[i] / 2);
+  c.closePath();
+  fillStroke(c, '#7fb6ff', INK, 7);
+  c.clip();
+  band(-0.5, -0.3, 'rgba(255,255,255,0.4)');
+  band(0.3, 0.5, 'rgba(50,70,170,0.26)');
+  c.strokeStyle = 'rgba(40,70,170,0.4)';
+  c.lineWidth = 2.5;
+  c.setLineDash([9, 8]);
+  for (let i = 1; i < n; i += 2) {
+    if (th[i] < 54) continue;
+    c.beginPath();
+    c.moveTo(pts[i][0], pts[i][1] - th[i] / 2 + 6);
+    c.lineTo(pts[i][0], pts[i][1] + th[i] / 2 - 6);
+    c.stroke();
+  }
+  line(0.3);
+  c.stroke();
+  c.setLineDash([]);
+  for (let i = 0; i < n; i++) {
+    if (th[i] < 46) continue;
+    if (i % 2 === 0) clover(c, pts[i][0], pts[i][1], th[i] * 0.14, i, '#ffffff', 0);
+    else clover(c, pts[i][0] + 14, pts[i][1] - th[i] * 0.16, th[i] * 0.07, i * 1.7, 'rgba(255,255,255,0.7)', 0);
+  }
+  c.restore();
+}
+// creases fanning out of the bite, where the cloth is bunched between her teeth
+function gather(c, pts, th, m) {
+  c.save();
+  c.lineCap = 'round';
+  c.strokeStyle = 'rgba(38,62,160,0.55)';
+  c.lineWidth = 3.5;
+  const [x0, y0] = pts[1], [x1, y1] = pts[m];
+  for (const j of [-0.34, -0.12, 0.1, 0.32]) {
+    const u = 0.62 + 0.3 * Math.abs(j);
+    c.beginPath();
+    c.moveTo(lerp(x0, x1, 0.08), lerp(y0, y1, 0.08) + j * th[1] * 0.5);
+    c.quadraticCurveTo(lerp(x0, x1, 0.45), lerp(y0, y1, 0.45) + j * th[m] * 0.55, lerp(x0, x1, u), lerp(y0, y1, u) + j * th[m] * u);
+    c.stroke();
+  }
+  c.restore();
+}
+// her lip closed over the cloth and her chin tucked under it
+function lips(c, p) {
+  const [x1, y1] = headPt(p, 60, 30), [x2, y2] = headPt(p, 94, 28);
+  const a = Math.atan2(y2 - y1, (x2 - x1) * p.dir) * p.dir, r = p.s;
+  c.save();
+  c.lineCap = 'round';
+  for (const [hx, hy, rx, ry] of [[66, 49, 15, 8], [77, 30, 21, 8]]) {
+    const [x, y] = headPt(p, hx, hy);
+    c.beginPath();
+    c.ellipse(x, y, rx * r, ry * r, a, 0, TAU);
+    c.fillStyle = '#ffffff';
+    c.fill();
+    c.beginPath();
+    c.ellipse(x, y, rx * r, ry * r, a, 0.15, Math.PI - 0.15);
+    c.strokeStyle = INK;
+    c.lineWidth = 4.5;
+    c.stroke();
+  }
+  c.restore();
+}
 const tugAt = (t) => {
   const k = clamp((t - TUG0) / (SNAP - TUG0));
   const heave = Math.sin((t - TUG0) * 9);
@@ -296,8 +503,29 @@ const tugAt = (t) => {
 function tugBg(c, s) {
   room(c, 'bedroom', 900, s.t);
 }
+// tug of war: she faces The Hand, heels dug in, hauling backwards with a corner of the duvet in her teeth
+const tugPose = (s) => {
+  const g = tugAt(s.t);
+  return { x: g.x - 200 + (s.d % 2 ? 1 : -1) * 5 * g.k, y: GY, s: 1.25, dir: 1, lean: -0.36 - 0.1 * g.k, legs: [-0.8, -0.45], phase: null, ear: 0.15, eyes: s.t > 132.7 ? 'closed' : 'wide', mouth: 0, wag: wag(s.tc) * 2, sq: 0.04 * g.k, headTilt: -0.1, breath: false, blink: false, puffs: false };
+};
 function tugCel(c, s) {
   const g = tugAt(s.t);
+  if (DETAIL.on) {
+    const p = tugPose(s);
+    brie(c, p);
+    const T = lerp(130, 64, g.k), a = headPt(p, 58, 38), b = headPt(p, 98, 36), ex = g.hx - 30, ey = 560 + T / 2;
+    const pts = [a], th = [24];
+    for (let i = 0; i <= 16; i++) {
+      const u = i / 16, e = 1 - Math.pow(1 - clamp(u / 0.3), 2);
+      pts.push([lerp(b[0], ex, u), lerp(b[1], ey, u) + Math.sin(u * Math.PI) * lerp(90, 8, g.k) + Math.sin(s.tc * 30 + i) * 5 * g.k * Math.min(1, u * 4)]);
+      th.push(lerp(26, T, e));
+    }
+    quilt(c, pts, th);
+    gather(c, pts, th, 6);
+    lips(c, p);
+    fist(c, g.hx, 600);
+    return;
+  }
   const tr = (s.d % 2 ? 1 : -1) * 5 * g.k;
   const mx = g.x - 150 * 1.25, my = GY - 205 * 1.25;
   // the duvet, stretched thinner and thinner between her teeth and The Hand
@@ -312,6 +540,14 @@ function tugCel(c, s) {
 }
 function tugFx(c, s) {
   const g = tugAt(s.t);
+  if (DETAIL.on) {
+    const p = tugPose(s);
+    // heels skidding, and the strain of it
+    for (let i = 0; i < 2; i++) puff(c, p.x + 150 + i * 60, GY + 6, frac(s.tc * 3 + i / 2) * 0.35, 0.6, i + s.d, '#f6e2c8');
+    drop(c, p.x + 40, GY - 330 - frac(s.lt * 2) * 50, 1 - frac(s.lt * 2));
+    drop(c, p.x - 150, GY - 290 - frac(s.lt * 2 + 0.5) * 50, 1 - frac(s.lt * 2 + 0.5));
+    return;
+  }
   for (let i = 0; i < 2; i++) puff(c, g.x + 150 + i * 70, GY + 6, frac(s.tc * 3 + i / 2) * 0.35, 0.6, i + s.d, '#f6e2c8');
   drop(c, g.x - 20, GY - 330 - frac(s.lt * 2) * 50, 1 - frac(s.lt * 2));
   drop(c, g.x - 250, GY - 300 - frac(s.lt * 2 + 0.5) * 50, 1 - frac(s.lt * 2 + 0.5));
@@ -328,7 +564,7 @@ const tugClose = {
   t: 132.7, tr: 'impact', hand: 0.5, punch: 2,
   cam: (s) => {
     const g = tugAt(s.t);
-    return cam(g.x + 120, 700, crash(s.lt, 1.5, 1.75), -0.05);
+    return cam(g.x + (DETAIL.on ? 60 : 120), DETAIL.on ? 720 : 700, crash(s.lt, 1.5, 1.75), -0.05);
   },
   bg: tugBg, cel: tugCel,
   fx(c, s) {
@@ -340,7 +576,7 @@ const tugClose = {
     c.lineCap = 'round';
     for (let i = 0; i < 5; i++) {
       const a = frac(s.tc * 3 + i / 5);
-      const x = lerp(g.x + 100, g.x + 620, rand(i + s.d * 0)), y = 640 + rand(i + 4) * 80;
+      const x = lerp(g.x + 100, g.x + 620, rand(i + s.d * 0)), y = DETAIL.on ? 800 - (x - g.x) * 0.2 + rand(i + 4) * 40 : 640 + rand(i + 4) * 80;
       c.globalAlpha = 1 - a;
       c.beginPath();
       c.moveTo(x, y);
@@ -369,8 +605,41 @@ const snap = {
       const d = i * 62;
       pts.push([bx + 40 + d * (1 - up * 0.6), by - 250 + d * (0.12 + up * 0.5) + Math.sin(s.t * 16 - i * 0.6) * (10 + i * 3.4)]);
     }
+    const p = { x: bx, y: by, ground: GY, s: 1.3, dir: -1, phase: up > 0 ? null : frac(s.lt * 6), amp: 1, legs: up > 0 ? [-0.9, 0.9] : undefined, sq: -0.25 * up, ear: 1, mouth: 0.4, eyes: 'happy', wag: wag(s.tc), lean: 0.24, shadow: up < 0.5 };
+    if (DETAIL.on) {
+      // the corner is in her teeth: the duvet fans out of the bite, over her far shoulder, and streams behind
+      const q = { ...p, mouth: 0 };
+      const [sx, sy] = headPt(q, 40, 36);
+      const cp = [], th = [];
+      for (let i = 0; i <= 16; i++) {
+        const rise = Math.sin(Math.min(1, i / 5) * Math.PI / 2);
+        cp.push([sx + i * 72 * (1 - up * 0.6), sy - 122 * rise + Math.max(0, i - 5) * 62 * (0.12 + up * 0.5) + Math.sin(s.t * 16 - i * 0.6) * i * 3.4]);
+        th.push(lerp(30, 130, 1 - Math.pow(1 - clamp(i / 4), 2)));
+      }
+      quilt(c, cp, th);
+      brie(c, q);
+      // the bitten corner pokes out past her lips and flaps
+      const fl = Math.sin(s.tc * 22) * 7;
+      const nub = [[56, 31], [98, 27], [142, 20 + fl], [156, 40 + fl * 1.3], [130, 56 + fl], [98, 47], [56, 45]].map(([hx, hy]) => headPt(q, hx, hy));
+      c.beginPath();
+      nub.forEach(([x, y], i) => (i ? c.lineTo(x, y) : c.moveTo(x, y)));
+      c.closePath();
+      c.lineJoin = 'round';
+      fillStroke(c, '#7fb6ff', INK, 6);
+      const [kx, ky] = headPt(q, 128, 37 + fl), [f0x, f0y] = headPt(q, 100, 37), [f1x, f1y] = headPt(q, 146, 30 + fl);
+      clover(c, kx, ky, 9, 2, '#ffffff', 0);
+      c.strokeStyle = 'rgba(38,62,160,0.55)';
+      c.lineWidth = 3;
+      c.lineCap = 'round';
+      c.beginPath();
+      c.moveTo(f0x, f0y);
+      c.lineTo(lerp(f0x, f1x, 0.45), lerp(f0y, f1y, 0.45));
+      c.stroke();
+      lips(c, q);
+      return;
+    }
     P.duvetShape(c, pts, 130);
-    brie(c, { x: bx, y: by, ground: GY, s: 1.3, dir: -1, phase: up > 0 ? null : frac(s.lt * 6), amp: 1, legs: up > 0 ? [-0.9, 0.9] : undefined, sq: -0.25 * up, ear: 1, mouth: 0.4, eyes: 'happy', wag: wag(s.tc), lean: 0.24, shadow: up < 0.5 });
+    brie(c, p);
   },
   fx(c, s) {
     speedLines(c, s.tc, 0.9, 1, 'rgba(255,255,255,0.8)', 380, 1000);
