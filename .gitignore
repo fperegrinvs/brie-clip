@@ -1,0 +1,14 @@
+.DS_Store
+.venv/
+node_modules/
+out/
+*.mp4
+__pycache__/
+*.mov
+*.webm
+*.mkv
+*.gif
+*.log
+frames/
+dist/
+build/
