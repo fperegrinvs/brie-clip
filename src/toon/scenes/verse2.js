@@ -2,7 +2,7 @@
 import { sky, speedLines, focusLines, sunburst, twinkleStars, sparkles } from '../../fx.js';
 import { blob, fillStroke, DETAIL } from '../../util.js';
 import { pool, vgrad, glint, planetShade, sheen, flame } from '../paint.js';
-import { drawWings } from '../../bree.js';
+import { drawWings } from '../../brie.js';
 import { bigLabel } from '../../text.js';
 import * as P from '../../props.js';
 import { brie, jump, zip, skid, take, tiptoe } from '../actor.js';

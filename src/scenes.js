@@ -1,7 +1,7 @@
 // One draw function per song section. Each gets (ctx, t, sec) where sec = sectionAt(t).
 import { TAU, INK, clamp, lerp, inv, easeOut, easeIn, easeInOut, easeOutBack, rand, rrange, noise, blob, fillStroke, clover, heart, star } from './util.js';
 import { W, H, sky, flash, vignette, speedLines, focusLines, sunburst, halftone, twinkleStars, confetti, hearts, dust, lightning, firework, sparkles, smokeTrail, fluffWipe, shadow } from './fx.js';
-import { drawBreeSide, drawBreeFront, drawFrontHead, drawBreeZoom, drawWings } from './bree.js';
+import { drawBrieSide, drawBrieFront, drawFrontHead, drawBrieZoom, drawWings } from './brie.js';
 import { beatAt, beatPhase, pulse, energyAt, hitAt, LYRICS } from './timeline.js';
 import { logo, bigLabel, COMIC } from './text.js';
 import * as P from './props.js';
@@ -11,12 +11,12 @@ const FY = P.FLOOR_Y;
 const run = (t, mult = 1) => ((beatAt(t) * mult) % 1 + 1) % 1;
 
 /* ---------- helpers ---------- */
-function bree(ctx, x, y, s, dir, o = {}, withShadow = true) {
+function brie(ctx, x, y, s, dir, o = {}, withShadow = true) {
   if (withShadow) shadow(ctx, x, y + 4, 110 * s);
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(s * dir, s);
-  drawBreeSide(ctx, o);
+  drawBrieSide(ctx, o);
   ctx.restore();
 }
 function front(ctx, x, y, s, o = {}, withShadow = true) {
@@ -24,7 +24,7 @@ function front(ctx, x, y, s, o = {}, withShadow = true) {
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(s, s);
-  drawBreeFront(ctx, o);
+  drawBrieFront(ctx, o);
   ctx.restore();
 }
 function sub(t, cuts) {
@@ -162,7 +162,7 @@ function title(ctx, t, sec) {
   if (lt < 4.2) {
     sunburst(ctx, t, W / 2, H / 2, '#ffd84d', '#fff3b0', 22, 0.2);
     halftone(ctx, 'rgba(255,140,60,0.25)', 34, 9);
-    // Bree jumping behind logo
+    // Brie jumping behind logo
     front(ctx, W / 2, 1050 + Math.abs(Math.sin(beatAt(t) * Math.PI)) * -40, 1.5, { expr: 'happy', wag: wag(t), crown: false });
     logo(ctx, W / 2, 270, 1.1, lt, { ribbon: true });
     flash(ctx, clamp(1 - lt / 0.25));
@@ -175,7 +175,7 @@ function title(ctx, t, sec) {
     house(ctx, hx, 830, 0.95, 0);
     const bx = lerp(300, hx - 250, easeInOut(k / 6.43));
     speedLines(ctx, t, 0.6, -1, 'rgba(255,255,255,0.7)', 200, 900);
-    bree(ctx, bx, 900, 1.3, 1, { phase: run(t, 1), amp: 1, ear: 0.8, mouth: 0.4, eyes: 'happy', wag: wag(t) });
+    brie(ctx, bx, 900, 1.3, 1, { phase: run(t, 1), amp: 1, ear: 0.8, mouth: 0.4, eyes: 'happy', wag: wag(t) });
     dust(ctx, t, bx - 120, 900, t - (t % 0.45), 4, 30, '#ffffff');
   }
   const wp = (lt - 3.8) / 0.4;
@@ -210,7 +210,7 @@ function arrive(ctx, t, sec) {
   if (lt < 0.8) x = lerp(-200, 900, easeOut(lt / 0.8));
   const y = 960 - Math.abs(Math.sin(f * Math.PI * 3)) * 70;
   speedLines(ctx, t, 0.8, dir, 'rgba(255,255,255,0.8)', 600, 1000);
-  drawBreeZoom(ctx, x, y, 1.15, lt < 0.8 ? 1 : dir, { phase: run(t, 2), amp: 1, ear: 1, mouth: 0.7, eyes: 'happy', wag: wag(t) }, 5, 70);
+  drawBrieZoom(ctx, x, y, 1.15, lt < 0.8 ? 1 : dir, { phase: run(t, 2), amp: 1, ear: 1, mouth: 0.7, eyes: 'happy', wag: wag(t) }, 5, 70);
   dust(ctx, t, x - dir * 140, 960, t - (t % 0.3), 4, 34, '#f6e2c8');
   if (lt < 0.5) {
     flash(ctx, 1 - lt / 0.5, '#fff6c8');
@@ -267,7 +267,7 @@ function verse1(ctx, t, sec) {
     ctx.translate(x, 960);
     if (sliding) ctx.rotate(-0.22);
     ctx.scale(1.3, 1.3);
-    drawBreeSide(ctx, sliding ? { phase: 0.25, amp: 0.4, eyes: 'wide', ear: 1, mouth: 1 } : { phase: run(t, 2), ear: 1, mouth: 0.4, eyes: 'happy', wag: wag(t) });
+    drawBrieSide(ctx, sliding ? { phase: 0.25, amp: 0.4, eyes: 'wide', ear: 1, mouth: 1 } : { phase: run(t, 2), ear: 1, mouth: 0.4, eyes: 'happy', wag: wag(t) });
     ctx.restore();
     if (sliding || lt > skidT) {
       for (let k = 0; k < 6; k++) dust(ctx, t, 1000 + k * 55, 960, s.start + skidT + k * 0.1, 3, 40, '#f6e2c8', -1);
@@ -306,7 +306,7 @@ function verse1(ctx, t, sec) {
     ctx.translate(xAt(f), y);
     ctx.scale(dir * 1.1, 1.1);
     ctx.rotate(0.05);
-    drawBreeSide(ctx, { phase: 0.7, amp: 0.3, ear: 1, mouth: 0.2, eyes: 'happy' });
+    drawBrieSide(ctx, { phase: 0.7, amp: 0.3, ear: 1, mouth: 0.2, eyes: 'happy' });
     ctx.restore();
     if (f > 0.4 && f < 0.75) bigLabel(ctx, 'ZUUUM!', W / 2, 220, 140, '#4cc3ff', (f - 0.4) * 8, 0.06 * dir);
   } else if (s.key === 'peek') {
@@ -346,14 +346,14 @@ function verse1(ctx, t, sec) {
       ctx.rotate(Math.PI + Math.sin(t * 22) * 0.18);
       ctx.scale(-1.3, 1.3);
       ctx.translate(0, 160);
-      drawBreeSide(ctx, { phase: (t * 4) % 1, amp: 1, eyes: 'happy', mouth: 0.8, ear: 0.4, wag: wag(t), ...costume('worm', t) });
+      drawBrieSide(ctx, { phase: (t * 4) % 1, amp: 1, eyes: 'happy', mouth: 0.8, ear: 0.4, wag: wag(t), ...costume('worm', t) });
       ctx.restore();
       bigLabel(ctx, 'WIGGLE WIGGLE', W / 2, 300, 110, '#b77dff', lt * 3, Math.sin(t * 10) * 0.08);
     } else {
       const k = (lt - 1.4) / (s.dur - 1.4);
       const x = lerp(W / 2, W + 600, easeIn(k));
       speedLines(ctx, t, 1, 1);
-      drawBreeZoom(ctx, x, 960, 1.3, 1, { phase: run(t, 3), ear: 1, mouth: 0.6, eyes: 'happy', wag: wag(t), ...costume('worm', t) }, 6, 80);
+      drawBrieZoom(ctx, x, 960, 1.3, 1, { phase: run(t, 3), ear: 1, mouth: 0.6, eyes: 'happy', wag: wag(t), ...costume('worm', t) }, 6, 80);
       dust(ctx, t, W / 2, 960, s.start + 1.4, 8, 50, '#f6e2c8');
     }
   }
@@ -409,7 +409,7 @@ function prechorus(ctx, t, sec) {
     ctx.rotate(-0.12 + Math.sin(lt * 5) * 0.08);
     ctx.scale(1.6, 1.6);
     ctx.translate(0, 90);
-    drawBreeSide(ctx, { phase: null, ear: 1, mouth: 1, eyes: 'happy', wag: wag(t), ...withRocket(costume('cheese', t), t) });
+    drawBrieSide(ctx, { phase: null, ear: 1, mouth: 1, eyes: 'happy', wag: wag(t), ...withRocket(costume('cheese', t), t) });
     ctx.restore();
     bigLabel(ctx, 'FOGUETE!', W / 2, 170, 120, '#ff8c42', lt * 2.5, -0.05);
   } else if (s.key === 'croc') {
@@ -455,7 +455,7 @@ function prechorus(ctx, t, sec) {
     ctx.translate(0, -58);
     ctx.rotate(Math.sin(t * 20) * 0.06);
     ctx.scale(1.05, 1.05);
-    drawBreeSide(ctx, { phase: null, ear: 1, mouth: 1, eyes: 'wide', wag: wag(t), ...costume('cabbage', t) });
+    drawBrieSide(ctx, { phase: null, ear: 1, mouth: 1, eyes: 'wide', wag: wag(t), ...costume('cabbage', t) });
     ctx.restore();
     P.rail(ctx, -120, 640, 760, 640 + 880 * sl);
     buddy(-120, 640, 760, 640 + 880 * sl, 0.05 + pr * 0.7, 82, 3);
@@ -526,7 +526,7 @@ function chorus(ctx, t, sec) {
   const dir = -Math.sin(th) > 0 ? 1 : -1;
   const o = { phase: run(t, 2), amp: 1, ear: 1, mouth: 0.6, eyes: 'happy', wag: wag(t) };
   const drawB = () => {
-    drawBreeZoom(ctx, bx, by, scl, dir, o, 4, 50 * scl);
+    drawBrieZoom(ctx, bx, by, scl, dir, o, 4, 50 * scl);
     dust(ctx, t, bx - dir * 120 * scl, by, t - (t % 0.25), 3, 26 * scl, '#ffffff');
   };
   if (depth < 0) drawB();
@@ -628,7 +628,7 @@ function thunder(ctx, t, sec) {
   // the world
   const gr = 760;
   P.globe(ctx, W / 2, H + gr - 300, gr, -t * 0.9);
-  // Bree running on top with cape
+  // Brie running on top with cape
   const bx = W / 2, by = H - 300 + 6;
   const tilt = Math.sin(t * 2) * 0.04;
   ctx.save();
@@ -638,7 +638,7 @@ function thunder(ctx, t, sec) {
   let cw = -1;
   if (line) for (let i = 0; i < line.words.length; i++) if (t >= line.words[i][0]) cw = i;
   const kind = cw >= 0 ? (/CÔVE/.test(line.words[cw][1]) ? 'cabbage' : /MINHOCA/.test(line.words[cw][1]) ? 'worm' : 'lion') : null;
-  bree(ctx, 0, 0, 1.25, 1, { cape: { t }, phase: run(t, 2), amp: 1, ear: 1, mouth: wi >= 0 ? 1 : 0.5, eyes: wi >= 0 ? 'wide' : 'happy', wag: wag(t), ...(kind ? costume(kind, t) : {}) }, false);
+  brie(ctx, 0, 0, 1.25, 1, { cape: { t }, phase: run(t, 2), amp: 1, ear: 1, mouth: wi >= 0 ? 1 : 0.5, eyes: wi >= 0 ? 'wide' : 'happy', wag: wag(t), ...(kind ? costume(kind, t) : {}) }, false);
   if (cw >= 0) {
     // costume-change poof
     const pa = (t - line.words[cw][0]) / 0.3;
@@ -665,7 +665,7 @@ function interlude(ctx, t, sec) {
   const jy = jumpPh > 0.75 ? Math.sin(((jumpPh - 0.75) / 0.25) * Math.PI) * 200 : 0;
   speedLines(ctx, t, 1, -1, 'rgba(255,255,255,0.8)', 300, 1000);
   shadow(ctx, 900, 960, 140 * (1 - jy / 400));
-  bree(ctx, 900, 960 - jy, 1.35, 1, { phase: jy > 0 ? 0.3 : run(t, 2), amp: jy > 0 ? 0.3 : 1, ear: 1, mouth: 0.6, eyes: 'happy', wag: wag(t) }, false);
+  brie(ctx, 900, 960 - jy, 1.35, 1, { phase: jy > 0 ? 0.3 : run(t, 2), amp: jy > 0 ? 0.3 : 1, ear: 1, mouth: 0.6, eyes: 'happy', wag: wag(t) }, false);
   dust(ctx, t, 760, 960, t - (t % 0.22), 3, 30, '#f6e2c8');
 }
 
@@ -726,7 +726,7 @@ function verse2(ctx, t, sec) {
     ctx.translate(900, FY + 95 - jy + (crouch ? dip : 0));
     ctx.rotate(air ? -Math.sin(jp * Math.PI) * 0.22 : 0);
     ctx.scale(crouch ? 1.38 : 1.25, crouch ? 1.06 : 1.25);
-    drawBreeSide(ctx, { phase: air ? 0.3 : run(t, 2), amp: air ? 0.6 : 1, ear: air ? 0.4 + jp : 1, mouth: 0.8, eyes: 'happy', wag: wag(t) });
+    drawBrieSide(ctx, { phase: air ? 0.3 : run(t, 2), amp: air ? 0.6 : 1, ear: air ? 0.4 + jp : 1, mouth: 0.8, eyes: 'happy', wag: wag(t) });
     ctx.restore();
     if (t >= T_JUMP) bigLabel(ctx, 'BOING!', 1300, 420, 140, '#4cc3ff', t - T_JUMP, 0.1);
     speedLines(ctx, t, 0.5, -1);
@@ -741,7 +741,7 @@ function verse2(ctx, t, sec) {
     ctx.scale(z, z);
     // wings sprout on "voando" ("e vem voando")
     drawWings(ctx, easeOutBack(clamp((t - 102.9) / 0.35)), Math.sin(t * 17) * 0.32);
-    drawBreeFront(ctx, { expr: k > 0.55 ? 'shout' : 'happy', wag: wag(t), earFlop: 1, tilt: Math.sin(t * 6) * 0.1 });
+    drawBrieFront(ctx, { expr: k > 0.55 ? 'shout' : 'happy', wag: wag(t), earFlop: 1, tilt: Math.sin(t * 6) * 0.1 });
     ctx.restore();
     if (k > 0.82) fluffWipe(ctx, (k - 0.82) / 0.18);
   } else if (s.key === 'zoo') {
@@ -750,7 +750,7 @@ function verse2(ctx, t, sec) {
     P.zooGate(ctx, 760 - camX * 0.35, 900);
     speedLines(ctx, t, 0.7, -1, 'rgba(255,255,255,0.7)', 300, 900);
     const bx = 1000 + Math.sin(lt * 2.5) * 80;
-    bree(ctx, bx, 960, 1.3, 1, { phase: run(t, 2), ear: 1, mouth: 0.9, eyes: 'happy', wag: wag(t), ...costume('croc', t) });
+    brie(ctx, bx, 960, 1.3, 1, { phase: run(t, 2), ear: 1, mouth: 0.9, eyes: 'happy', wag: wag(t), ...costume('croc', t) });
     dust(ctx, t, bx - 150, 960, t - (t % 0.25), 3, 30, '#f6e2c8');
     bigLabel(ctx, 'FUGIU!', 1450, 250, 130, '#43b75c', lt * 2.5, -0.08);
     if (lt < 0.45) fluffWipe(ctx, 1 + lt / 0.45);
@@ -804,7 +804,7 @@ function verse2(ctx, t, sec) {
     ctx.strokeStyle = '#b77dff';
     ctx.stroke();
     ctx.restore();
-    drawBreeSide(ctx, { phase: (t * 0.6) % 1, amp: 0.5, ear: 0.2, mouth: 0.7, eyes: 'happy', wag: wag(t) * 0.3, ...costume('cheese', t) });
+    drawBrieSide(ctx, { phase: (t * 0.6) % 1, amp: 0.5, ear: 0.2, mouth: 0.7, eyes: 'happy', wag: wag(t) * 0.3, ...costume('cheese', t) });
     ctx.save();
     ctx.translate(20, -110);
     ctx.rotate(-0.25);
@@ -868,7 +868,7 @@ function verse2(ctx, t, sec) {
       fillStroke(ctx, '#fff27a', null, 0);
       ctx.restore();
     }
-    drawBreeZoom(ctx, x + shake, 960, 1.3, 1, { phase: k > 0 ? run(t, 3) : run(t, 4) * 0.3, amp: k > 0 ? 1 : 0.25, ear: k > 0 ? 1 : 0.3, mouth: 0.5, eyes: k > 0 ? 'happy' : 'wide', wag: wag(t) }, k > 0 ? 6 : 0, 90);
+    drawBrieZoom(ctx, x + shake, 960, 1.3, 1, { phase: k > 0 ? run(t, 3) : run(t, 4) * 0.3, amp: k > 0 ? 1 : 0.25, ear: k > 0 ? 1 : 0.3, mouth: 0.5, eyes: k > 0 ? 'happy' : 'wide', wag: wag(t) }, k > 0 ? 6 : 0, 90);
     if (lt > launch - 0.1 && lt < launch + 1.2) bigLabel(ctx, 'TURBO!', W / 2, 520, 200, '#ff5d8f', (lt - launch) * 3, -0.06);
     if (lt > launch) dust(ctx, t, 600, 960, s.start + launch, 10, 60, '#f6e2c8');
   }
@@ -967,11 +967,11 @@ function breakdown(ctx, t, sec) {
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, W, H);
     P.bed(ctx, W / 2, 960, 1.4);
-    // Bree lying on the bed, tail end glowing
+    // Brie lying on the bed, tail end glowing
     ctx.save();
     ctx.translate(W / 2 - 20, 960 - 200 * 1.4 + 10);
     ctx.scale(-1.2, 1.2);
-    drawBreeSide(ctx, { phase: null, eyes: 'closed', mouth: 0, wag: Math.sin(t * 2) });
+    drawBrieSide(ctx, { phase: null, eyes: 'closed', mouth: 0, wag: Math.sin(t * 2) });
     ctx.restore();
     // heat waves
     ctx.strokeStyle = 'rgba(255,120,60,0.85)';
@@ -1008,7 +1008,7 @@ function breakdown(ctx, t, sec) {
       pts.push([bx - 60 - d, by - 150 + d * 0.18 + Math.sin(t * 14 - i * 0.6) * (10 + i * 3)]);
     }
     duvetBehind(ctx, pts);
-    bree(ctx, bx, by, 1.1, 1, { phase: run(t, 2), ear: 1, mouth: 0.3, eyes: 'happy', wag: wag(t) });
+    brie(ctx, bx, by, 1.1, 1, { phase: run(t, 2), ear: 1, mouth: 0.3, eyes: 'happy', wag: wag(t) });
     speedLines(ctx, t, 0.6, 1, 'rgba(255,255,255,0.7)', 500, 1000);
   }
 }
@@ -1093,7 +1093,7 @@ function restart(ctx, t, sec) {
       ctx.restore();
     }
   }
-  // Bree zooming across in alternating directions after the blast
+  // Brie zooming across in alternating directions after the blast
   if (lt < 1.86) {
     const s = 1.6 * easeOutBack(lt / 0.4);
     front(ctx, W / 2, 1000, s, { expr: 'shout', wag: wag(t), earFlop: 1 }, false);
@@ -1114,7 +1114,7 @@ function restart(ctx, t, sec) {
       ctx.lineTo(x - dir * 900, y - 120 + c * 18);
       ctx.stroke();
     }
-    drawBreeZoom(ctx, x, y, 1.1, dir, { phase: run(t, 3), ear: 1, mouth: 0.9, eyes: 'happy', wag: wag(t) }, 4, 70);
+    drawBrieZoom(ctx, x, y, 1.1, dir, { phase: run(t, 3), ear: 1, mouth: 0.9, eyes: 'happy', wag: wag(t) }, 4, 70);
   }
   flash(ctx, clamp(1 - lt / 0.4));
 }
@@ -1193,11 +1193,11 @@ function parade(ctx, t, sec) {
     // the costume parade: every character was Brie all along
     const tr = (i, x, y, sc, kind, o = {}) => {
       shadow(ctx, x + enter(i), 964, 90 * sc);
-      bree(ctx, x + enter(i), y - hop(i), sc, 1, { phase: run(t, 2), ear: 0.8, mouth: 0.7, eyes: 'happy', wag: wag(t), ...o, ...costume(kind, t) }, false);
+      brie(ctx, x + enter(i), y - hop(i), sc, 1, { phase: run(t, 2), ear: 0.8, mouth: 0.7, eyes: 'happy', wag: wag(t), ...o, ...costume(kind, t) }, false);
     };
-    // Bree leading with cape and crown (drawn first so the lion walks in front of the cape's tip)
+    // Brie leading with cape and crown (drawn first so the lion walks in front of the cape's tip)
     const bx = 1650 + enter(0);
-    bree(ctx, bx, 960, 1.0, 1, { cape: { t }, phase: run(t, 2), ear: 0.8, mouth: 0.7, eyes: 'happy', wag: wag(t), crown: true });
+    brie(ctx, bx, 960, 1.0, 1, { cape: { t }, phase: run(t, 2), ear: 0.8, mouth: 0.7, eyes: 'happy', wag: wag(t), crown: true });
     tr(5, 140, 960, 0.66, 'croc');
     tr(4, 500, 960, 0.66, 'worm');
     tr(3, 770, 960, 0.66, 'cheese');
@@ -1208,7 +1208,7 @@ function parade(ctx, t, sec) {
     P.skate(ctx, 52, 0, 0.7, t * 25);
     ctx.translate(0, -40);
     ctx.scale(0.66, 0.66);
-    drawBreeSide(ctx, { phase: null, ear: 0.8, mouth: 0.7, eyes: 'happy', wag: wag(t), ...costume('cabbage', t) });
+    drawBrieSide(ctx, { phase: null, ear: 0.8, mouth: 0.7, eyes: 'happy', wag: wag(t), ...costume('cabbage', t) });
     ctx.restore();
     tr(1, 1290, 960, 0.66, 'lion');
     // floating notes

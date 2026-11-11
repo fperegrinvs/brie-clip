@@ -13,7 +13,7 @@ from faster_whisper import WhisperModel
 src, out = sys.argv[1], sys.argv[2]
 size = sys.argv[3] if len(sys.argv) > 3 else "medium"
 prompt = (
-    "Bree, Briezinha, furacão de algodão. Pim pim pim pinha. Linhão Bombom. "
+    "Brie, Briezinha, furacão de algodão. Pim pim pim pinha. Linhão Bombom. "
     "Linguistos, cocodrilo, côve de patins. Zoomies. Vai pra cãodeia. Edredom. Recomeçou."
 )
 pcm = subprocess.run(["ffmpeg", "-v", "error", "-i", src, "-ac", "1", "-ar", "16000", "-f", "f32le", "-"], capture_output=True, check=True).stdout

@@ -2,7 +2,7 @@
 import { W, H, sky, twinkleStars } from '../src/fx.js';
 import * as P from '../src/props.js';
 import { TAU, INK, blob, fillStroke, clover, clamp, lerp, rand, star } from '../src/util.js';
-import { drawBreeSide } from '../src/bree.js';
+import { drawBrieSide } from '../src/brie.js';
 import { costume, withRocket } from '../src/costumes.js';
 import { SING } from '../src/text.js';
 import { LEVEL, GY, GOAL } from './level.js';
@@ -589,7 +589,7 @@ function drawBubble(ctx, b, t, current) {
   ctx.save();
   ctx.translate(-4, 48);
   ctx.scale(0.27, 0.27);
-  drawBreeSide(ctx, { phase: null, eyes: 'happy', mouth: 0.6, wag: t * 10, lw: 7, ...costumeOpts(b.kind, t) });
+  drawBrieSide(ctx, { phase: null, eyes: 'happy', mouth: 0.6, wag: t * 10, lw: 7, ...costumeOpts(b.kind, t) });
   ctx.restore();
   ctx.strokeStyle = 'rgba(255,255,255,0.9)';
   ctx.lineWidth = 6;

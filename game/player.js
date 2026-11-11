@@ -1,5 +1,5 @@
 // Brie: movement, costume powers and drawing.
-import { drawBreeSide } from '../src/bree.js';
+import { drawBrieSide } from '../src/brie.js';
 import { costume, withRocket } from '../src/costumes.js';
 import { skate } from '../src/props.js';
 import { clamp, lerp } from '../src/util.js';
@@ -343,7 +343,7 @@ export function drawPlayer(ctx, p, alpha = 1, extra = {}) {
     crown: !!extra.crown,
     ...costumeOpts(p.costume, t),
   };
-  drawBreeSide(ctx, opts);
+  drawBrieSide(ctx, opts);
   if (p.costume === 'cabbage') {
     skate(ctx, -66, 10, 0.62, p.spin);
     skate(ctx, 64, 10, 0.62, p.spin);

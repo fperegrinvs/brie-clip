@@ -2,7 +2,7 @@
 import { W, H, sky, confetti, firework, sparkles, twinkleStars } from '../src/fx.js';
 import { SING, COMIC, burstWord, logo } from '../src/text.js';
 import { TAU, INK, clamp, lerp, easeOutBack, heart, star, clover, fillStroke, rand } from '../src/util.js';
-import { drawBreeSide, drawCrown } from '../src/bree.js';
+import { drawBrieSide, drawCrown } from '../src/brie.js';
 import * as P from '../src/props.js';
 import { LEVEL, GY, zoneAt, BOUNDS, camMaxY, GOAL, FRIEND_KINDS, START } from './level.js';
 import { makePlayer, updatePlayer, drawPlayer, COSTUME_NAMES, S } from './player.js';
@@ -677,7 +677,7 @@ function drawTitle() {
   ctx.save();
   ctx.translate(W / 2 - 40, 900);
   ctx.scale(0.85, 0.85);
-  drawBreeSide(ctx, { phase: (t * 1.6) % 1, amp: 0.5, eyes: Math.sin(t * 0.9) > 0.97 ? 'closed' : 'happy', mouth: 0.7, ear: 0.4, wag: t * 12, cape: { t, style: 'royal' } });
+  drawBrieSide(ctx, { phase: (t * 1.6) % 1, amp: 0.5, eyes: Math.sin(t * 0.9) > 0.97 ? 'closed' : 'happy', mouth: 0.7, ear: 0.4, wag: t * 12, cape: { t, style: 'royal' } });
   ctx.restore();
   // friends peeking around her
   FRIEND_KINDS.forEach((k, i) => {

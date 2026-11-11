@@ -57,7 +57,7 @@ function fringe(shapes, n, cx, cy, rx, ry, seed, r0 = 12, r1 = 8, skip) {
  * o.wag     tail wag phase (radians)
  * o.lw      outline width
  */
-export function drawBreeSide(ctx, o = {}) {
+export function drawBrieSide(ctx, o = {}) {
   const p = o.phase;
   const running = p !== null && p !== undefined;
   const amp = o.amp ?? 1;
@@ -685,7 +685,7 @@ function drawEye(ctx, x, y, kind, s = 1, look = 0, out = -1) {
  * o.crown bool
  * o.bodyless  only draw the head (for blanket shots)
  */
-export function drawBreeFront(ctx, o = {}) {
+export function drawBrieFront(ctx, o = {}) {
   const lw = o.lw ?? 6;
   const expr = o.expr ?? 'happy';
   ctx.save();
@@ -965,7 +965,7 @@ export function drawCrown(ctx, x, y) {
 }
 
 /* Motion-blurred zoomie: ghosts trailing behind */
-export function drawBreeZoom(ctx, x, y, s, dir, o, trail = 4, gap = 40) {
+export function drawBrieZoom(ctx, x, y, s, dir, o, trail = 4, gap = 40) {
   for (let i = trail; i >= 1; i--) {
     ctx.save();
     ctx.globalAlpha = 0.5 * (1 - i / (trail + 1));
@@ -981,11 +981,11 @@ export function drawBreeZoom(ctx, x, y, s, dir, o, trail = 4, gap = 40) {
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(s * dir, s);
-  drawBreeSide(ctx, o);
+  drawBrieSide(ctx, o);
   ctx.restore();
 }
 
-/* Feathered wings for the front pose. Draw BEFORE drawBreeFront in the same
+/* Feathered wings for the front pose. Draw BEFORE drawBrieFront in the same
    transform. open 0..1 (pop-in scale), flap in radians. */
 export function drawWings(ctx, open, flap = 0, lw = 6) {
   if (open <= 0) return;

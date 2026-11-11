@@ -252,7 +252,7 @@ export function logo(ctx, x, y, s, age, opts = {}) {
   ctx.translate(x, y);
   ctx.scale(s * pop, s * pop);
   ctx.rotate(-0.04);
-  // BREE
+  // BRIE
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.font = `330px ${COMIC}`;

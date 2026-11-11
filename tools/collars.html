@@ -1,6 +1,6 @@
 <!doctype html><meta charset="utf-8"><style>@font-face{font-family:Fredoka;src:url(../fonts/Fredoka.ttf)}</style><body style="margin:0"><canvas id="c" width="1920" height="2100"></canvas>
 <script type="module">
-import { drawBreeSide, drawBreeFront, setCollarStyle } from '../src/bree.js';
+import { drawBrieSide, drawBrieFront, setCollarStyle } from '../src/brie.js';
 const ctx = document.getElementById('c').getContext('2d');
 await document.fonts.load('40px Fredoka');
 const base = { band: '#0f5a45', stitch: null, studs: '#ffcf3f', ring: '#ffcf3f', tag: '#ffcf3f', clover: '#4fd36c', cloverOnly: true, studShape: 'dot', charmRim: null, charmSize: 30 };
@@ -21,8 +21,8 @@ OPTS.forEach(([label, st], i) => {
   ctx.fillStyle = BG[i]; ctx.fillRect(cx, cy, 640, 700);
   setCollarStyle(st);
   const put = (x, y, s, f) => { ctx.save(); ctx.translate(cx + x, cy + y); ctx.scale(s, s); f(); ctx.restore(); };
-  put(480, 650, 1.3, () => drawBreeFront(ctx, { expr: 'happy', wag: 1 }));
-  put(165, 620, 0.95, () => drawBreeSide(ctx, { phase: 0.3, amp: 1, eyes: 'happy', mouth: 0.6, ear: 1, wag: 2 }));
+  put(480, 650, 1.3, () => drawBrieFront(ctx, { expr: 'happy', wag: 1 }));
+  put(165, 620, 0.95, () => drawBrieSide(ctx, { phase: 0.3, amp: 1, eyes: 'happy', mouth: 0.6, ear: 1, wag: 2 }));
   ctx.fillStyle = '#3a2747'; ctx.font = '600 40px Fredoka'; ctx.fillText(label, cx + 24, cy + 56);
   ctx.strokeStyle = '#3a2747'; ctx.lineWidth = 4; ctx.strokeRect(cx, cy, 640, 700);
 });

@@ -1,6 +1,6 @@
 // Brie as an actor: wraps the existing drawings with squash & stretch, lean, smears,
 // multiples, and motion primitives built from anticipation -> action -> settle.
-import { drawBreeSide, drawBreeFront, drawFrontHead } from '../bree.js';
+import { drawBrieSide, drawBrieFront, drawFrontHead } from '../brie.js';
 import { costume } from '../costumes.js';
 import { shadow } from '../fx.js';
 import { skate } from '../props.js';
@@ -167,8 +167,8 @@ export function brie(ctx, o) {
       ctx.scale(o.stretch, 1 / Math.sqrt(o.stretch));
       ctx.translate(0, -cy);
     }
-    if (view === 'side') drawBreeSide(ctx, pose);
-    else if (view === 'front') drawBreeFront(ctx, pose);
+    if (view === 'side') drawBrieSide(ctx, pose);
+    else if (view === 'front') drawBrieFront(ctx, pose);
     else drawFrontHead(ctx, pose.expr ?? 'happy', pose.lw ?? 6, pose);
     ctx.restore();
   };

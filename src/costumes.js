@@ -1,6 +1,6 @@
 // Brie IS every character in the song: costumes she wears instead of
 // separate characters. costume(kind, t) returns hook options for
-// drawBreeSide / drawBreeFront: { under, overBody, overHead, noTail }.
+// drawBrieSide / drawBrieFront: { under, overBody, overHead, noTail }.
 // Hook coordinates are Brie-local: side head centre (98,-150), front head (0,-196).
 import { TAU, INK, blob, dblob, fillStroke, lerp } from './util.js';
 import { paoDeQueijo, rocketPack } from './props.js';

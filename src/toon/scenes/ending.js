@@ -3,7 +3,7 @@ import { sky, sunburst, twinkleStars, confetti, firework, sparkles, speedLines, 
 import { fillStroke, clover, DETAIL } from '../../util.js';
 import { pool, vgrad, glint, petals } from '../paint.js';
 import { bigLabel, COMIC, logo } from '../../text.js';
-import { drawSeatedCrown } from '../../bree.js';
+import { drawSeatedCrown } from '../../brie.js';
 import * as P from '../../props.js';
 import { brie, skid, skates, SKATE_H } from '../actor.js';
 import { cam, crash, shake } from '../camera.js';

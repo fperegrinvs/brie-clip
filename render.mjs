@@ -8,7 +8,7 @@ import { mkdirSync, writeFileSync, rmSync } from 'fs';
 const PAGE = process.env.PAGE || 'index.html';
 const EXE = process.env.HOME + '/Library/Caches/ms-playwright/chromium_headless_shell-1234/chrome-headless-shell-mac-arm64/chrome-headless-shell';
 const FPS = 30;
-const out = process.argv[2] || 'bree-clip.mp4';
+const out = process.argv[2] || 'brie-clip.mp4';
 const t0 = Number(process.argv[3] ?? 0);
 const tEnd = process.argv[4] != null ? Number(process.argv[4]) : null;
 const WORKERS = Number(process.argv[5] ?? 4);

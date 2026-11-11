@@ -1,10 +1,10 @@
 <!doctype html><html><head><meta charset="utf-8"><style>body{margin:0;background:#222}canvas{width:100vw}</style></head>
 <body><canvas id="c" width="1920" height="1080"></canvas>
 <script type="module">
-import { drawBreeSide, drawBreeFront } from './src/bree.js';
+import { drawBrieSide, drawBrieFront } from './src/brie.js';
 const c=document.getElementById('c'),ctx=c.getContext('2d');
 ctx.fillStyle='#8fd3ff';ctx.fillRect(0,0,1920,1080);
 const poses=[{phase:null},{phase:0.25,mouth:0.8,ear:1,eyes:'happy'},{phase:0.6,mouth:1,ear:1,wag:1}];
-poses.forEach((o,i)=>{ctx.save();ctx.translate(300+i*600,480);ctx.scale(1.3,1.3);drawBreeSide(ctx,o);ctx.restore();});
-['innocent','happy','guilty','shout'].forEach((e,i)=>{ctx.save();ctx.translate(260+i*460,1050);ctx.scale(1.1,1.1);drawBreeFront(ctx,{expr:e,crown:i==1});ctx.restore();});
+poses.forEach((o,i)=>{ctx.save();ctx.translate(300+i*600,480);ctx.scale(1.3,1.3);drawBrieSide(ctx,o);ctx.restore();});
+['innocent','happy','guilty','shout'].forEach((e,i)=>{ctx.save();ctx.translate(260+i*460,1050);ctx.scale(1.1,1.1);drawBrieFront(ctx,{expr:e,crown:i==1});ctx.restore();});
 </script></body></html>
